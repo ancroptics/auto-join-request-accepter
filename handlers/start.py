@@ -7,59 +7,58 @@ logger = logging.getLogger(__name__)
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    args = context.args
+    
+    # Handle referral deep links
     referrer_id = None
-    source = "organic"
-    if args and args[0].startswith("ref_"):
+    if context.args and context.args[0].startswith("ref_"):
         try:
-            referrer_id = int(args[0][4:])
-            source = "referral"
+            referrer_id = int(context.args[0][4:])
+            if referrer_id == user.id:
+                referrer_id = None
         except ValueError:
             pass
 
+    # Save user to DB
     try:
         import database as db
         if db.pool:
             existing = await db.get_user(user.id)
-            if not existing:
-                await db.add_user(
-                    user_id=user.id,
-                    username=user.username,
-                    first_name=user.first_name,
-                    source=source,
-                    referrer_id=referrer_id
-                )
-                if referrer_id:
-                    await db.add_referral(referrer_id, user.id)
-                    await db.add_coins(referrer_id, REFERRAL_REWARD_COINS)
-                    try:
-                        await context.bot.send_message(
-                            chat_id=referrer_id,
-                            text=f"<b>{user.first_name}</b> joined via your link! +{REFERRAL_REWARD_COINS} coins",
-                            parse_mode="HTML"
-                        )
-                    except Exception:
-                        pass
+            await db.upsert_user(
+                user_id=user.id, username=user.username,
+                first_name=user.first_name, referrer_id=referrer_id if not existing else None
+            )
+            # Process referral if new user
+            if referrer_id and not existing:
+                await db.increment_referral(referrer_id)
+                await db.add_coins(referrer_id, REFERRAL_REWARD_COINS)
+                try:
+                    await context.bot.send_message(
+                        chat_id=referrer_id,
+                        text=f"\U0001f389 <b>New Referral!</b>\n\n{user.first_name} joined via your link!\n+{REFERRAL_REWARD_COINS} coins earned!",
+                        parse_mode="HTML"
+                    )
+                except Exception:
+                    pass
     except Exception as e:
-        logger.error(f"DB error in start_command: {e}")
+        logger.error(f"DB error in start: {e}")
 
-    ref_link = f"https://t.me/{BOT_USERNAME}?start=ref_{user.id}"
-    buttons = []
+    # Build start message
+    buttons = [
+        [InlineKeyboardButton("\U0001f517 My Referral Link", callback_data="my_referral"),
+         InlineKeyboardButton("\U0001f4ca My Stats", callback_data="my_stats")],
+    ]
     if user.id in ADMIN_IDS:
-        buttons.append([InlineKeyboardButton("Admin Panel", callback_data="admin_panel")])
-    buttons.append([InlineKeyboardButton("My Referral Link", callback_data="my_referral")])
-    buttons.append([InlineKeyboardButton("My Stats", callback_data="my_stats")])
-    await update.message.reply_text(
-        f"<b>Welcome, {user.first_name}!</b>\n\n"
-        f"I automatically approve join requests for groups and channels.\n\n"
-        f"<b>How to use:</b>\n"
-        f"1. Add me to your group/channel as admin\n"
-        f"2. Give me permission to invite users\n"
-        f"3. Enable join requests\n"
-        f"4. I auto-approve all join requests!\n\n"
-        f"<b>Earn rewards!</b> Share your referral link:\n"
-        f"<code>{ref_link}</code>\n\n"
-        f"Commands: /referral /balance /leaderboard /mystats /help",
-        parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup(buttons)
+        buttons.append([InlineKeyboardButton("\U0001f6e0 Admin Panel", callback_data="admin_panel")])
+
+    text = (
+        f"\U0001f44b <b>Welcome, {user.first_name}!</b>\n\n"
+        f"I automatically approve join requests for your channels and groups.\n\n"
+        f"\U0001f517 Share your referral link to earn <b>{REFERRAL_REWARD_COINS} coins</b> per invite!\n\n"
+        f"Use the buttons below to get started:"
     )
+
+    if update.callback_query:
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons))
+    else:
+        await update.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons))
