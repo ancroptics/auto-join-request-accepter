@@ -1,7 +1,7 @@
 import asyncpg
 import logging
 import asyncio
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 from config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
@@ -11,13 +11,14 @@ def parse_db_url(url):
     try:
         parsed = urlparse(url)
         return dict(
-            user=parsed.username,
-            password=parsed.password,
+            user=unquote(parsed.username) if parsed.username else None,
+            password=unquote(parsed.password) if parsed.password else None,
             host=parsed.hostname,
             port=parsed.port or 5432,
             database=parsed.path.lstrip("/")
         )
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to parse DB URL: {e}")
         return None
 
 async def get_pool():
