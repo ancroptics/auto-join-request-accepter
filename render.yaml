@@ -6,7 +6,21 @@ services:
     envVars:
       - key: BOT_TOKEN
         sync: false
-      - key: ADMIN_USER_ID
+      - key: ADMIN_IDS
         sync: false
-      - key: SUPABASE_KEY
+      - key: BOT_USERNAME
         sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: PORT
+        value: "10000"
+      - key: USE_WEBHOOK
+        value: "false"
+      - key: REFERRAL_REWARD_COINS
+        value: "10"
+      - key: BROADCAST_RATE_LIMIT
+        value: "25"
+      - key: WELCOME_DM_ENABLED
+        value: "true"
+      - key: AUTO_APPROVE_ENABLED
+        value: "true"
