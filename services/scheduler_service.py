@@ -4,21 +4,25 @@ import database as db
 
 logger = logging.getLogger(__name__)
 
-async def auto_post_job(bot):
-    try:
-        jobs = await db.get_all_autoposter_jobs()
-        for j in jobs:
-            if not j.get("is_active"):
-                continue
-            try:
-                await bot.send_message(chat_id=j["chat_id"], text=j["message"], parse_mode="HTML")
-                logger.info(f"Auto-posted to {j['chat_id']}")
-            except Exception as e:
-                logger.error(f"Auto-post failed for {j['chat_id']}: {e}")
-    except Exception as e:
-        logger.error(f"Auto-post job error: {e}")
-
 async def run_scheduler(bot):
+    logger.info("Auto-poster scheduler started")
     while True:
-        await auto_post_job(bot)
-        await asyncio.sleep(300)
+        try:
+            if db.pool:
+                jobs = await db.get_all_autoposter_jobs()
+                for job in jobs:
+                    if job.get("is_active"):
+                        try:
+                            await bot.send_message(
+                                chat_id=job["chat_id"],
+                                text=job["message"],
+                                parse_mode="HTML"
+                            )
+                            logger.info(f"Auto-posted to {job['chat_id']}")
+                        except Exception as e:
+                            logger.error(f"Auto-post failed for {job['chat_id']}: {e}")
+        except Exception as e:
+            logger.error(f"Scheduler error: {e}")
+
+        # Sleep for minimum interval (check every 60 seconds)
+        await asyncio.sleep(60)
