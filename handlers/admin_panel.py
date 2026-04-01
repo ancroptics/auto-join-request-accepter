@@ -10,7 +10,7 @@ def admin_only(func):
         user_id = update.effective_user.id
         if user_id not in ADMIN_IDS:
             if update.callback_query:
-                await update.callback_query.answer("\u26d4 Admin only!", show_alert=True)
+                await update.callback_query.answer("Admin only!", show_alert=True)
             return
         return await func(update, context)
     return wrapper
@@ -27,16 +27,16 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         total, active, today = 0, 0, 0
     buttons = [
-        [InlineKeyboardButton("\ud83d\udcca Statistics", callback_data="adm_stats"),
-         InlineKeyboardButton("\ud83d\udce2 Broadcast", callback_data="adm_broadcast")],
-        [InlineKeyboardButton("\ud83d\udccb Join Requests", callback_data="adm_join_requests"),
-         InlineKeyboardButton("\ud83d\udce1 Channels", callback_data="adm_channels")],
-        [InlineKeyboardButton("\ud83d\udcdd Templates", callback_data="adm_templates"),
-         InlineKeyboardButton("\ud83e\udd16 Auto Poster", callback_data="adm_autoposter")],
-        [InlineKeyboardButton("\ud83d\udc65 User Mgmt", callback_data="adm_users"),
-         InlineKeyboardButton("\u2699\ufe0f Settings", callback_data="adm_settings")],
+        [InlineKeyboardButton("Statistics", callback_data="adm_stats"),
+         InlineKeyboardButton("Broadcast", callback_data="adm_broadcast")],
+        [InlineKeyboardButton("Join Requests", callback_data="adm_join_requests"),
+         InlineKeyboardButton("Channels", callback_data="adm_channels")],
+        [InlineKeyboardButton("Templates", callback_data="adm_templates"),
+         InlineKeyboardButton("Auto Poster", callback_data="adm_autoposter")],
+        [InlineKeyboardButton("User Mgmt", callback_data="adm_users"),
+         InlineKeyboardButton("Settings", callback_data="adm_settings")],
     ]
-    text = f"\u2699\ufe0f <b>Admin Panel</b>\n\n\ud83d\udc65 Total Users: {total:,}\n\u2705 Active: {active:,}\n\ud83d\udcc8 Today: +{today:,}\n"
+    text = f"<b>Admin Panel</b>\n\nTotal Users: {total:,}\nActive: {active:,}\nToday: +{today:,}\n"
     if update.callback_query:
         await update.callback_query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons))
     else:
@@ -64,29 +64,29 @@ async def stats_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         top_count = top_ref["referral_count"] if top_ref else 0
         dm_rate = (jr_stats["dm_sent"] / max(jr_stats["approved"], 1) * 100)
         text = (
-            f"\ud83d\udcca <b>Detailed Statistics</b>\n\n"
+            f"<b>Detailed Statistics</b>\n\n"
             f"<b>Users:</b>\n"
-            f"\ud83d\udc65 Total: {total:,}\n"
-            f"\u2705 Active: {active:,}\n"
-            f"\u274c Blocked: {blocked:,}\n"
-            f"\ud83d\udfe2 Active 24h: {active_24h:,}\n"
-            f"\ud83d\udfe1 Active 7d: {active_7d:,}\n\n"
+            f"Total: {total:,}\n"
+            f"Active: {active:,}\n"
+            f"Blocked: {blocked:,}\n"
+            f"Active 24h: {active_24h:,}\n"
+            f"Active 7d: {active_7d:,}\n\n"
             f"<b>Growth:</b>\n"
-            f"\ud83d\udcc8 Today: +{today:,}\n"
-            f"\ud83d\udcc8 This week: +{week:,}\n"
-            f"\ud83d\udcc8 This month: +{month:,}\n\n"
+            f"Today: +{today:,}\n"
+            f"This week: +{week:,}\n"
+            f"This month: +{month:,}\n\n"
             f"<b>Join Requests:</b>\n"
-            f"\ud83d\udccb Total: {jr_stats['total']:,}\n"
-            f"\u2705 Approved: {jr_stats['approved']:,}\n"
-            f"\ud83d\udce8 DMs sent: {jr_stats['dm_sent']:,} ({dm_rate:.1f}%)\n\n"
+            f"Total: {jr_stats['total']:,}\n"
+            f"Approved: {jr_stats['approved']:,}\n"
+            f"DMs sent: {jr_stats['dm_sent']:,} ({dm_rate:.1f}%)\n\n"
             f"<b>Referrals:</b>\n"
-            f"\ud83d\udd17 Total: {total_refs:,}\n"
-            f"\ud83c\udfc6 Top: {top_name} ({top_count})\n\n"
+            f"Total: {total_refs:,}\n"
+            f"Top: {top_name} ({top_count})\n\n"
             f"<b>Broadcasts:</b> {bc_count:,}"
         )
     except Exception as e:
         logger.error(f"DB error in stats_panel: {e}")
-        text = "\u26a0\ufe0f Database temporarily unavailable. Stats cannot be shown."
-    buttons = [[InlineKeyboardButton("\u25c0\ufe0f Back", callback_data="admin_panel")]]
+        text = "Database temporarily unavailable. Stats cannot be shown."
+    buttons = [[InlineKeyboardButton("Back", callback_data="admin_panel")]]
     if update.callback_query:
         await update.callback_query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons))
