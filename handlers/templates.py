@@ -1,78 +1,50 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, CallbackQueryHandler, filters
+from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, filters
 from config import ADMIN_IDS
 import database as db
 
 logger = logging.getLogger(__name__)
 
-TEMPLATE_NAME, TEMPLATE_CONTENT = range(2)
-
-
-async def templates_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    try:
-        templates = await db.get_all_templates()
-    except Exception:
-        templates = []
-    text = "\U0001f4dd <b>Message Templates</b>\n\n"
-    if templates:
-        for i, t in enumerate(templates, 1):
-            text += f"{i}. <b>{t['name']}</b>\n"
-    else:
-        text += "No templates yet.\n"
-    text += "\nUse /addtemplate to create a new template.\nUse /deltemplate <name> to delete."
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("\u2795 Add Template", callback_data="tpl_add")],
-        [InlineKeyboardButton("\U0001f519 Admin Panel", callback_data="admin_panel")]
-    ])
-    await query.edit_message_text(text, reply_markup=keyboard, parse_mode="HTML")
-
+TEMPLATE_CONTENT = 0
 
 async def add_template_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = update.effective_user.id
-    if uid not in ADMIN_IDS:
+    if update.effective_user.id not in ADMIN_IDS:
         return ConversationHandler.END
-    await update.message.reply_text("Send the <b>template name</b>:", parse_mode="HTML")
-    return TEMPLATE_NAME
-
-
-async def template_name_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["tpl_name"] = update.message.text.strip()
+    args = update.message.text.split(maxsplit=1)
+    if len(args) < 2:
+        await update.message.reply_text("Usage: /addtemplate <name>")
+        return ConversationHandler.END
+    context.user_data["template_name"] = args[1].strip()
     await update.message.reply_text(
-        "Now send the <b>template content</b> (HTML supported).\n"
-        "Placeholders: {first_name}, {user_id}, {username}",
+        f"\U0001f4c4 Creating template: <b>{args[1].strip()}</b>\n\nSend the template content (HTML supported).\nUse /cancel to abort.",
         parse_mode="HTML"
     )
     return TEMPLATE_CONTENT
 
-
-async def template_content_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    name = context.user_data.pop("tpl_name", "unnamed")
+async def add_template_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    name = context.user_data.get("template_name", "unnamed")
     content = update.message.text
     try:
         await db.save_template(name, content)
-        await update.message.reply_text(f"\u2705 Template <b>{name}</b> saved!", parse_mode="HTML")
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Admin Panel", callback_data="admin_panel")]])
+        await update.message.reply_text(f"\u2705 Template '<b>{name}</b>' saved!", parse_mode="HTML", reply_markup=kb)
     except Exception as e:
         await update.message.reply_text(f"Error: {e}")
     return ConversationHandler.END
 
-
-async def cancel_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def template_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Cancelled.")
     return ConversationHandler.END
 
-
 async def del_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = update.effective_user.id
-    if uid not in ADMIN_IDS:
+    if update.effective_user.id not in ADMIN_IDS:
         return
-    args = context.args
-    if not args:
+    args = update.message.text.split(maxsplit=1)
+    if len(args) < 2:
         await update.message.reply_text("Usage: /deltemplate <name>")
         return
-    name = " ".join(args)
+    name = args[1].strip()
     try:
         ok = await db.delete_template(name)
         if ok:
@@ -82,13 +54,10 @@ async def del_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"Error: {e}")
 
-
 def get_template_handler():
     return ConversationHandler(
         entry_points=[CommandHandler("addtemplate", add_template_start)],
-        states={
-            TEMPLATE_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, template_name_received)],
-            TEMPLATE_CONTENT: [MessageHandler(filters.TEXT & ~filters.COMMAND, template_content_received)],
-        },
-        fallbacks=[CommandHandler("cancel", cancel_template)],
+        states={TEMPLATE_CONTENT: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_template_content)]},
+        fallbacks=[CommandHandler("cancel", template_cancel)],
+        per_user=True, per_chat=True
     )

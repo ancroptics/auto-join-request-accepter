@@ -1,102 +1,106 @@
 import logging
-import time
-import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler, MessageHandler, filters
-from telegram.error import Forbidden, BadRequest, RetryAfter
-from config import ADMIN_IDS, BROADCAST_RATE_LIMIT
+from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, CallbackQueryHandler, filters
+from config import ADMIN_IDS
 import database as db
+import asyncio
 
 logger = logging.getLogger(__name__)
-CONTENT, CONFIRM = range(2)
+
+BROADCAST_MSG = 0
 
 async def broadcast_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
         return ConversationHandler.END
-    await update.callback_query.answer()
-    await update.callback_query.edit_message_text(
-        "<b>Broadcast</b>\n\nSend me the message to broadcast (text, photo, video, or document).\n\nSend /cancel to abort.",
-        parse_mode="HTML"
-    )
-    return CONTENT
+    target = "all"
+    if update.callback_query:
+        data = update.callback_query.data
+        if data == "broadcast_new":
+            target = "new"
+        elif data == "broadcast_active":
+            target = "active"
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text(
+            f"\U0001f4e2 <b>Broadcast to: {target}</b>\n\nSend the message to broadcast.\nUse /cancel to abort.",
+            parse_mode="HTML"
+        )
+    else:
+        await update.message.reply_text(
+            "\U0001f4e2 <b>Broadcast</b>\n\nSend the message to broadcast to all users.\nUse /cancel to abort.",
+            parse_mode="HTML"
+        )
+    context.user_data["broadcast_target"] = target
+    return BROADCAST_MSG
 
-async def broadcast_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["broadcast_message"] = update.message
-    users = await db.get_all_active_users()
-    count = len(users)
-    est_time = count / BROADCAST_RATE_LIMIT
-    buttons = [
-        [InlineKeyboardButton("SEND NOW", callback_data="bc_confirm"),
-         InlineKeyboardButton("Cancel", callback_data="bc_cancel")]
-    ]
-    await update.message.reply_text(
-        f"<b>Broadcast Preview</b>\n\nTarget: {count:,} users\nEst. time: {est_time:.0f}s\n\nReady to send?",
-        parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons)
-    )
-    return CONFIRM
+async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS:
+        return ConversationHandler.END
+    message = update.message
+    target = context.user_data.get("broadcast_target", "all")
 
-async def broadcast_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.callback_query.answer()
-    await update.callback_query.edit_message_text("Broadcasting...")
-    msg = context.user_data.get("broadcast_message")
-    users = await db.get_all_active_users()
+    try:
+        if target == "new":
+            user_ids = await db.get_new_user_ids(7)
+        elif target == "active":
+            user_ids = await db.get_active_user_ids(30)
+        else:
+            user_ids = await db.get_all_user_ids()
+    except Exception as e:
+        await message.reply_text(f"Error getting users: {e}")
+        return ConversationHandler.END
+
+    total = len(user_ids)
+    progress = await message.reply_text(f"\U0001f4e4 Broadcasting to {total} users...")
+
     sent, failed, blocked = 0, 0, 0
-    start_time = time.time()
-    for i, row in enumerate(users):
-        uid = row["user_id"]
+    for i, uid in enumerate(user_ids):
         try:
-            await msg.copy(chat_id=uid)
+            await message.copy(chat_id=uid)
             sent += 1
-            await db.increment_broadcasts_received(uid)
-        except Forbidden:
-            blocked += 1
-            await db.ban_user(uid)
-        except BadRequest:
-            failed += 1
-        except RetryAfter as e:
-            await asyncio.sleep(e.retry_after)
-            try:
-                await msg.copy(chat_id=uid)
-                sent += 1
-            except Exception:
+        except Exception as e:
+            err = str(e).lower()
+            if "blocked" in err or "deactivated" in err:
+                blocked += 1
+            else:
                 failed += 1
-        except Exception:
-            failed += 1
-        if (i + 1) % 100 == 0:
+        if (i + 1) % 25 == 0:
+            await asyncio.sleep(1)
             try:
-                await update.callback_query.edit_message_text(
-                    f"Broadcasting... {i+1}/{len(users)}\n{sent} | {failed} | {blocked}"
-                )
-            except Exception:
+                await progress.edit_text(f"\U0001f4e4 Progress: {i+1}/{total} (sent: {sent})")
+            except:
                 pass
-        await asyncio.sleep(1 / BROADCAST_RATE_LIMIT)
-    duration = time.time() - start_time
-    await db.log_broadcast(update.effective_user.id, len(users), sent, failed, blocked, duration)
-    speed = sent / max(duration, 1)
-    await update.callback_query.edit_message_text(
-        f"<b>Broadcast Complete</b>\n\nSent: {sent:,}\nFailed: {failed:,}\nBlocked: {blocked:,}\nDuration: {duration:.0f}s\nSpeed: {speed:.1f} msg/sec",
-        parse_mode="HTML"
+
+    try:
+        await db.log_broadcast(update.effective_user.id, total, sent, failed, blocked)
+    except:
+        pass
+
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Admin Panel", callback_data="admin_panel")]])
+    await progress.edit_text(
+        f"\u2705 <b>Broadcast Complete</b>\n\n"
+        f"Target: {target}\n"
+        f"Total: {total}\n"
+        f"\u2705 Sent: {sent}\n"
+        f"\u274c Failed: {failed}\n"
+        f"\U0001f6ab Blocked: {blocked}",
+        parse_mode="HTML", reply_markup=kb
     )
     return ConversationHandler.END
 
 async def broadcast_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.callback_query:
-        await update.callback_query.answer()
-        await update.callback_query.edit_message_text("Broadcast cancelled.")
-    else:
-        await update.message.reply_text("Broadcast cancelled.")
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Admin Panel", callback_data="admin_panel")]])
+    await update.message.reply_text("Broadcast cancelled.", reply_markup=kb)
     return ConversationHandler.END
 
 def get_broadcast_handler():
     return ConversationHandler(
-        entry_points=[CallbackQueryHandler(broadcast_start, pattern="^adm_broadcast$")],
+        entry_points=[
+            CommandHandler("broadcast", broadcast_start),
+            CallbackQueryHandler(broadcast_start, pattern="^broadcast_(all|new|active)$")
+        ],
         states={
-            CONTENT: [MessageHandler(filters.ALL & ~filters.COMMAND, broadcast_content)],
-            CONFIRM: [
-                CallbackQueryHandler(broadcast_confirm, pattern="^bc_confirm$"),
-                CallbackQueryHandler(broadcast_cancel, pattern="^bc_cancel$"),
-            ],
+            BROADCAST_MSG: [MessageHandler(filters.ALL & ~filters.COMMAND, broadcast_receive)]
         },
-        fallbacks=[MessageHandler(filters.Regex("^/cancel$"), broadcast_cancel)],
-        per_message=False,
+        fallbacks=[CommandHandler("cancel", broadcast_cancel)],
+        per_user=True, per_chat=True
     )
