@@ -12,7 +12,10 @@ TEMPLATE_NAME, TEMPLATE_CONTENT = range(2)
 async def templates_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    templates = await db.get_all_templates()
+    try:
+        templates = await db.get_all_templates()
+    except Exception:
+        templates = []
     text = "\U0001f4dd <b>Message Templates</b>\n\n"
     if templates:
         for i, t in enumerate(templates, 1):
@@ -48,8 +51,11 @@ async def template_name_received(update: Update, context: ContextTypes.DEFAULT_T
 async def template_content_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     name = context.user_data.pop("tpl_name", "unnamed")
     content = update.message.text
-    await db.save_template(name, content)
-    await update.message.reply_text(f"\u2705 Template <b>{name}</b> saved!", parse_mode="HTML")
+    try:
+        await db.save_template(name, content)
+        await update.message.reply_text(f"\u2705 Template <b>{name}</b> saved!", parse_mode="HTML")
+    except Exception as e:
+        await update.message.reply_text(f"Error: {e}")
     return ConversationHandler.END
 
 
@@ -67,11 +73,14 @@ async def del_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Usage: /deltemplate <name>")
         return
     name = " ".join(args)
-    ok = await db.delete_template(name)
-    if ok:
-        await update.message.reply_text(f"\u2705 Template '{name}' deleted.")
-    else:
-        await update.message.reply_text(f"\u274c Template '{name}' not found.")
+    try:
+        ok = await db.delete_template(name)
+        if ok:
+            await update.message.reply_text(f"\u2705 Template '{name}' deleted.")
+        else:
+            await update.message.reply_text(f"Template '{name}' not found.")
+    except Exception as e:
+        await update.message.reply_text(f"Error: {e}")
 
 
 def get_template_handler():
