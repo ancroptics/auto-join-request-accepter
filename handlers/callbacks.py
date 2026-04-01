@@ -12,6 +12,7 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
 
     try:
+        # ===== USER CALLBACKS =====
         if data == "my_referral":
             link = f"https://t.me/{BOT_USERNAME}?start=ref_{user_id}"
             text = (
@@ -25,9 +26,12 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         elif data == "my_stats":
             if db.pool:
-                referrals = await db.get_referral_count(user_id)
-                coins = await db.get_coins(user_id)
-                rank = await db.get_user_rank(user_id)
+                try:
+                    referrals = await db.get_referral_count(user_id)
+                    coins = await db.get_coins(user_id)
+                    rank = await db.get_user_rank(user_id)
+                except:
+                    referrals, coins, rank = 0, 0, "N/A"
             else:
                 referrals, coins, rank = 0, 0, "N/A"
             text = (
@@ -36,6 +40,8 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"\U0001f4b0 Coins: <b>{coins}</b>\n"
                 f"\U0001f3c6 Rank: <b>#{rank}</b>"
             )
+            if not db.pool:
+                text += "\n\n\u26a0\ufe0f Database offline - stats may be inaccurate"
             kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Back", callback_data="go_home")]])
             await query.answer()
             await query.edit_message_text(text, parse_mode="HTML", reply_markup=kb)
@@ -44,6 +50,7 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             from handlers.start import start_command
             await start_command(update, context)
 
+        # ===== ADMIN PANEL =====
         elif data == "admin_panel":
             if user_id not in ADMIN_IDS:
                 await query.answer("Unauthorized", show_alert=True)
@@ -51,40 +58,158 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             from handlers.admin_panel import admin_panel
             await admin_panel(update, context)
 
-        elif data == "admin_stats":
+        elif data == "stats_panel":
             if user_id not in ADMIN_IDS:
                 await query.answer("Unauthorized", show_alert=True)
                 return
-            from handlers.admin_panel import show_stats
-            await show_stats(update, context)
+            from handlers.admin_panel import stats_panel
+            await stats_panel(update, context)
 
-        elif data == "admin_join_requests":
+        elif data == "broadcast_panel":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            from handlers.admin_panel import broadcast_panel
+            await broadcast_panel(update, context)
+
+        elif data == "joinreq_panel":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            from handlers.admin_panel import joinreq_panel
+            await joinreq_panel(update, context)
+
+        elif data == "channels_panel":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            from handlers.admin_panel import channels_panel
+            await channels_panel(update, context)
+
+        elif data == "templates_panel":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            from handlers.admin_panel import templates_panel
+            await templates_panel(update, context)
+
+        elif data == "autoposter_panel":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            from handlers.admin_panel import autoposter_panel
+            await autoposter_panel(update, context)
+
+        elif data == "usermgmt_panel":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            from handlers.admin_panel import usermgmt_panel
+            await usermgmt_panel(update, context)
+
+        elif data == "settings_panel":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            from handlers.admin_panel import settings_panel
+            await settings_panel(update, context)
+
+        elif data == "toggle_auto_approve":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            from handlers.admin_panel import toggle_auto_approve
+            await toggle_auto_approve(update, context)
+
+        elif data == "edit_welcome_msg":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            context.user_data["set_welcome_chat_id"] = "global"
+            kb = InlineKeyboardMarkup([[InlineKeyboardButton("Cancel", callback_data="joinreq_panel")]])
+            await query.answer()
+            await query.edit_message_text(
+                "\U0001f4dd <b>Set Welcome Message</b>\n\n"
+                "Send the welcome message for new join requests.\n"
+                "Supports HTML formatting.\n\n"
+                "Variables: {first_name}, {user_id}, {username}\n\n"
+                "Send /cancel to abort.",
+                parse_mode="HTML", reply_markup=kb
+            )
+
+        elif data == "export_users":
+            if user_id not in ADMIN_IDS:
+                await query.answer("Unauthorized", show_alert=True)
+                return
+            from handlers.admin_panel import export_users
+            await export_users(update, context)
+
+        elif data == "lookup_user":
             if user_id not in ADMIN_IDS:
                 return
-            from handlers.admin_panel import show_join_requests
-            await show_join_requests(update, context)
+            await query.answer()
+            await query.edit_message_text(
+                "\U0001f50d <b>Lookup User</b>\n\nSend /userinfo &lt;user_id&gt; to look up a user.",
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Back", callback_data="usermgmt_panel")]])
+            )
 
-        elif data == "admin_channels":
+        elif data == "ban_user":
             if user_id not in ADMIN_IDS:
                 return
-            from handlers.admin_panel import show_channels
-            await show_channels(update, context)
+            await query.answer()
+            await query.edit_message_text(
+                "\U0001f6ab <b>Ban User</b>\n\nSend /ban &lt;user_id&gt; to ban a user.\nSend /unban &lt;user_id&gt; to unban.",
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Back", callback_data="usermgmt_panel")]])
+            )
 
+        elif data == "set_language":
+            if user_id not in ADMIN_IDS:
+                return
+            await query.answer("Language settings coming soon!", show_alert=True)
+
+        elif data == "set_mandatory":
+            if user_id not in ADMIN_IDS:
+                return
+            await query.answer("Mandatory channel settings coming soon!", show_alert=True)
+
+        # ===== BROADCAST TARGETS =====
+        elif data in ("broadcast_all", "broadcast_new", "broadcast_active"):
+            if user_id not in ADMIN_IDS:
+                return
+            target = data.replace("broadcast_", "")
+            context.user_data["broadcast_target"] = target
+            kb = InlineKeyboardMarkup([[InlineKeyboardButton("\u274c Cancel", callback_data="broadcast_panel")]])
+            await query.answer()
+            await query.edit_message_text(
+                f"\U0001f4e3 <b>Broadcast to: {target.upper()}</b>\n\n"
+                "Send the message you want to broadcast.\n"
+                "Supports text, photo, video, document.\n\n"
+                "Send /cancel to abort.",
+                parse_mode="HTML", reply_markup=kb
+            )
+
+        # ===== CHANNEL-SPECIFIC =====
         elif data.startswith("ch_toggle_"):
             if user_id not in ADMIN_IDS:
                 return
             chat_id = int(data.replace("ch_toggle_", ""))
-            new_val = await db.toggle_channel_auto_approve(chat_id)
-            await query.answer(f"Auto-approve: {'ON' if new_val else 'OFF'}")
-            from handlers.admin_panel import show_channels
-            await show_channels(update, context)
+            if db.pool:
+                new_val = await db.toggle_channel_auto_approve(chat_id)
+                status = "ON" if new_val else "OFF"
+                await query.answer(f"Auto-approve: {status}")
+            else:
+                await query.answer("DB offline", show_alert=True)
+            from handlers.admin_panel import channels_panel
+            await channels_panel(update, context)
 
         elif data.startswith("ch_welcome_"):
             if user_id not in ADMIN_IDS:
                 return
             chat_id = int(data.replace("ch_welcome_", ""))
             context.user_data["set_welcome_chat_id"] = chat_id
-            kb = InlineKeyboardMarkup([[InlineKeyboardButton("Cancel", callback_data="admin_channels")]])
+            kb = InlineKeyboardMarkup([[InlineKeyboardButton("Cancel", callback_data="channels_panel")]])
             await query.answer()
             await query.edit_message_text(
                 "\U0001f4dd Send the welcome message for this channel.\nSupports HTML formatting.\n\nSend /cancel to abort.",
@@ -95,92 +220,13 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if user_id not in ADMIN_IDS:
                 return
             chat_id = int(data.replace("ch_delete_", ""))
-            await db.delete_channel(chat_id)
-            await query.answer("Channel removed!")
-            from handlers.admin_panel import show_channels
-            await show_channels(update, context)
-
-        elif data == "admin_templates":
-            if user_id not in ADMIN_IDS:
-                return
-            from handlers.admin_panel import show_templates
-            await show_templates(update, context)
-
-        elif data == "admin_autoposter":
-            if user_id not in ADMIN_IDS:
-                return
-            from handlers.admin_panel import show_autoposter
-            await show_autoposter(update, context)
-
-        elif data == "admin_user_mgmt":
-            if user_id not in ADMIN_IDS:
-                return
-            from handlers.admin_panel import show_user_mgmt
-            await show_user_mgmt(update, context)
-
-        elif data == "admin_settings":
-            if user_id not in ADMIN_IDS:
-                return
-            from handlers.admin_panel import show_settings
-            await show_settings(update, context)
-
-        elif data.startswith("toggle_setting_"):
-            if user_id not in ADMIN_IDS:
-                return
-            key = data.replace("toggle_setting_", "")
-            settings = await db.get_bot_settings()
-            new_val = not settings.get(key, True)
-            await db.update_bot_setting(key, new_val)
-            await query.answer(f"{key}: {'ON' if new_val else 'OFF'}")
-            from handlers.admin_panel import show_settings
-            await show_settings(update, context)
-
-        elif data == "admin_broadcast":
-            if user_id not in ADMIN_IDS:
-                return
-            kb = InlineKeyboardMarkup([
-                [InlineKeyboardButton("\U0001f4e2 All Users", callback_data="broadcast_all")],
-                [InlineKeyboardButton("\U0001f195 New (7d)", callback_data="broadcast_new"),
-                 InlineKeyboardButton("\U0001f525 Active (30d)", callback_data="broadcast_active")],
-                [InlineKeyboardButton("\U0001f519 Back", callback_data="admin_panel")]
-            ])
-            await query.answer()
-            await query.edit_message_text("\U0001f4e3 <b>Broadcast</b>\n\nChoose target audience:", parse_mode="HTML", reply_markup=kb)
-
-        elif data == "admin_referrals":
-            if user_id not in ADMIN_IDS:
-                return
-            total_refs = await db.get_total_referrals()
-            top = await db.get_top_referrer()
-            leaderboard = await db.get_leaderboard(5)
-            text = f"\U0001f4ca <b>Referral Stats</b>\n\nTotal referrals: <b>{total_refs}</b>\n"
-            if top:
-                text += f"Top referrer: {top.get('first_name', 'Unknown')} ({top.get('referral_count', 0)})\n"
-            if leaderboard:
-                text += "\n<b>Leaderboard:</b>\n"
-                for i, u in enumerate(leaderboard, 1):
-                    text += f"{i}. {u.get('first_name', 'Unknown')} - {u.get('referral_count', 0)} refs\n"
-            kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Back", callback_data="admin_panel")]])
-            await query.answer()
-            await query.edit_message_text(text, parse_mode="HTML", reply_markup=kb)
-
-        elif data == "admin_export":
-            if user_id not in ADMIN_IDS:
-                return
-            await query.answer("Exporting...")
-            users = await db.get_all_users_for_export()
-            import io
-            output = io.StringIO()
-            output.write("user_id,username,first_name,joined_at,referrals,coins,banned\n")
-            for u in users:
-                output.write(f"{u['user_id']},{u.get('username','')},{u.get('first_name','')},{u.get('joined_at','')},{u.get('referral_count',0)},{u.get('coins',0)},{u.get('is_banned',False)}\n")
-            output.seek(0)
-            from telegram import InputFile
-            await context.bot.send_document(
-                chat_id=user_id,
-                document=InputFile(io.BytesIO(output.getvalue().encode()), filename="users_export.csv"),
-                caption=f"\U0001f4e5 Exported {len(users)} users"
-            )
+            if db.pool:
+                await db.delete_channel(chat_id)
+                await query.answer("Channel removed!")
+            else:
+                await query.answer("DB offline", show_alert=True)
+            from handlers.admin_panel import channels_panel
+            await channels_panel(update, context)
 
         else:
             logger.warning(f"Unhandled callback: {data}")
