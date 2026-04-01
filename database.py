@@ -1,19 +1,42 @@
 import asyncpg
 import logging
 import asyncio
+import re
 from config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 pool = None
 
+def parse_db_url(url):
+    """Parse DATABASE_URL handling special chars in password."""
+    m = re.match(r'postgresql://([^:]+):(.+)@([^:]+):(\d+)/(.+?)(\?.*)?$', url)
+    if m:
+        return {
+            "user": m.group(1),
+            "password": m.group(2),
+            "host": m.group(3),
+            "port": int(m.group(4)),
+            "database": m.group(5),
+        }
+    return None
+
 async def init_db():
     global pool
     for attempt in range(5):
         try:
-            pool = await asyncpg.create_pool(
-                DATABASE_URL + ("?sslmode=require" if "sslmode" not in DATABASE_URL else ""),
-                min_size=2, max_size=10, command_timeout=30
-            )
+            params = parse_db_url(DATABASE_URL)
+            if params:
+                logger.info(f"Connecting to DB at {params['host']}:{params['port']}/{params['database']} as {params['user']}")
+                pool = await asyncpg.create_pool(
+                    host=params["host"], port=params["port"],
+                    user=params["user"], password=params["password"],
+                    database=params["database"],
+                    min_size=2, max_size=10, command_timeout=30,
+                    ssl="require"
+                )
+            else:
+                dsn = DATABASE_URL + ("?sslmode=require" if "sslmode" not in DATABASE_URL else "")
+                pool = await asyncpg.create_pool(dsn, min_size=2, max_size=10, command_timeout=30)
             await run_migrations()
             logger.info("Database connected")
             return
@@ -127,31 +150,36 @@ async def mark_dm_sent(user_id, chat_id, message_id=None):
     """, user_id, chat_id, message_id)
 
 async def get_join_request_stats():
-    total = await fetchval("SELECT COUNT(*) FROM join_requests")
-    approved = await fetchval("SELECT COUNT(*) FROM join_requests WHERE status = 'approved'")
-    dm_sent = await fetchval("SELECT COUNT(*) FROM join_requests WHERE dm_sent = TRUE")
-    return {"total": total or 0, "approved": approved or 0, "dm_sent": dm_sent or 0}
+    row = await fetchrow("""
+        SELECT COUNT(*) as total,
+               COUNT(*) FILTER (WHERE status = 'approved') as approved,
+               COUNT(*) FILTER (WHERE dm_sent = TRUE) as dm_sent
+        FROM join_requests
+    """)
+    return {"total": row["total"], "approved": row["approved"], "dm_sent": row["dm_sent"]}
 
 async def log_referral(referrer_id, referred_id, coins):
     await execute("""
         INSERT INTO referral_log (referrer_id, referred_id, coins_awarded)
-        VALUES ($1, $2, $3) ON CONFLICT DO NOTHING
+        VALUES ($1, $2, $3)
+        ON CONFLICT (referrer_id, referred_id) DO NOTHING
     """, referrer_id, referred_id, coins)
 
 async def get_total_referrals():
-    return await fetchval("SELECT COUNT(*) FROM referral_log") or 0
+    return await fetchval("SELECT COUNT(*) FROM referral_log")
 
 async def get_top_referrer():
-    return await fetchrow("SELECT username, referral_count FROM users ORDER BY referral_count DESC LIMIT 1")
+    row = await fetchrow("SELECT user_id, first_name, username, referral_count FROM users ORDER BY referral_count DESC LIMIT 1")
+    return row
 
 async def log_broadcast(admin_id, total, sent, failed, blocked, duration):
-    return await fetchval("""
+    await execute("""
         INSERT INTO broadcast_log (admin_id, total_target, sent_count, failed_count, blocked_count, duration_seconds)
-        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
+        VALUES ($1, $2, $3, $4, $5, $6)
     """, admin_id, total, sent, failed, blocked, duration)
 
 async def get_broadcast_count():
-    return await fetchval("SELECT COUNT(*) FROM broadcast_log") or 0
+    return await fetchval("SELECT COUNT(*) FROM broadcast_log")
 
 async def save_template(name, content, buttons_json=None, created_by=None):
     await execute("""
@@ -164,17 +192,18 @@ async def get_template(name):
     return await fetchrow("SELECT * FROM message_templates WHERE name = $1", name)
 
 async def list_templates():
-    return await fetch("SELECT name, content FROM message_templates ORDER BY created_at DESC")
+    return await fetch("SELECT name, content FROM message_templates ORDER BY name")
 
 async def delete_template(name):
     await execute("DELETE FROM message_templates WHERE name = $1", name)
 
-async def upsert_channel(chat_id, title, welcome_message=None, auto_approve=True):
+async def upsert_channel(chat_id, title, welcome_message=None, welcome_buttons=None, auto_approve=True):
     await execute("""
-        INSERT INTO channel_config (chat_id, title, welcome_message, auto_approve)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (chat_id) DO UPDATE SET title = $2, welcome_message = COALESCE($3, channel_config.welcome_message), auto_approve = $4
-    """, chat_id, title, welcome_message, auto_approve)
+        INSERT INTO channel_config (chat_id, title, welcome_message, welcome_buttons, auto_approve)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (chat_id) DO UPDATE SET title = $2, welcome_message = COALESCE($3, channel_config.welcome_message),
+            welcome_buttons = COALESCE($4, channel_config.welcome_buttons), auto_approve = $5
+    """, chat_id, title, welcome_message, welcome_buttons, auto_approve)
 
 async def get_channel_config(chat_id):
     return await fetchrow("SELECT * FROM channel_config WHERE chat_id = $1", chat_id)
@@ -193,31 +222,34 @@ async def get_auto_post_groups():
 
 async def get_due_schedules():
     return await fetch("""
-        SELECT s.*, g.chat_id as group_chat_id, g.title as group_title
-        FROM auto_post_schedules s
-        JOIN auto_post_groups g ON s.group_id = g.id
+        SELECT s.id, s.content, s.interval_minutes, g.chat_id as group_chat_id, g.title as group_title
+        FROM auto_post_schedules s JOIN auto_post_groups g ON s.group_id = g.id
         WHERE s.is_active = TRUE AND g.is_active = TRUE AND s.next_post_at <= NOW()
     """)
 
-async def update_schedule_posted(schedule_id, next_post_at):
+async def update_schedule_posted(schedule_id, next_post):
     await execute("""
-        UPDATE auto_post_schedules SET last_posted_at = NOW(), next_post_at = $2, post_count = post_count + 1 WHERE id = $1
-    """, schedule_id, next_post_at)
+        UPDATE auto_post_schedules SET last_posted_at = NOW(), next_post_at = $2, post_count = post_count + 1
+        WHERE id = $1
+    """, schedule_id, next_post)
 
 async def record_daily_stats():
-    total = await get_user_count()
-    active = await get_active_count()
-    new = await get_today_joins()
-    jr = await fetchval("SELECT COUNT(*) FROM join_requests WHERE request_time >= CURRENT_DATE")
-    refs = await fetchval("SELECT COUNT(*) FROM referral_log WHERE created_at >= CURRENT_DATE") or 0
     await execute("""
-        INSERT INTO daily_stats (stat_date, total_users, active_users, new_users, join_requests, referrals)
-        VALUES (CURRENT_DATE, $1, $2, $3, $4, $5)
-        ON CONFLICT (stat_date) DO UPDATE SET total_users=$1, active_users=$2, new_users=$3, join_requests=$4, referrals=$5
-    """, total, active, new, jr or 0, refs)
+        INSERT INTO daily_stats (date, total_users, active_users, new_users, total_referrals, total_broadcasts)
+        VALUES (CURRENT_DATE,
+            (SELECT COUNT(*) FROM users),
+            (SELECT COUNT(*) FROM users WHERE last_active >= CURRENT_DATE AND is_banned = FALSE),
+            (SELECT COUNT(*) FROM users WHERE joined_at >= CURRENT_DATE),
+            (SELECT COUNT(*) FROM referral_log),
+            (SELECT COUNT(*) FROM broadcast_log))
+        ON CONFLICT (date) DO UPDATE SET
+            total_users = EXCLUDED.total_users, active_users = EXCLUDED.active_users,
+            new_users = EXCLUDED.new_users, total_referrals = EXCLUDED.total_referrals,
+            total_broadcasts = EXCLUDED.total_broadcasts
+    """)
 
 async def get_daily_stats(days=7):
-    return await fetch("SELECT * FROM daily_stats ORDER BY stat_date DESC LIMIT $1", days)
+    return await fetch("SELECT * FROM daily_stats ORDER BY date DESC LIMIT $1", days)
 
 SCHEMA = """
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -270,8 +302,7 @@ CREATE TABLE IF NOT EXISTS auto_post_schedules (
     post_count INTEGER DEFAULT 0, created_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE TABLE IF NOT EXISTS daily_stats (
-    stat_date DATE PRIMARY KEY DEFAULT CURRENT_DATE, total_users INTEGER DEFAULT 0,
-    active_users INTEGER DEFAULT 0, new_users INTEGER DEFAULT 0,
-    join_requests INTEGER DEFAULT 0, referrals INTEGER DEFAULT 0
+    date DATE PRIMARY KEY, total_users INTEGER DEFAULT 0, active_users INTEGER DEFAULT 0,
+    new_users INTEGER DEFAULT 0, total_referrals INTEGER DEFAULT 0, total_broadcasts INTEGER DEFAULT 0
 );
 """
