@@ -1,0 +1,1 @@
+-- Schema is auto-applied via database.py run_migrations()
