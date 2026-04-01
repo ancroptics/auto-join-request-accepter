@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: auto-join-request-accepter
+    runtime: docker
+    plan: free
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_USER_ID
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
