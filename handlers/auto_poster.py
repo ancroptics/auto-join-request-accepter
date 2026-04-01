@@ -1,140 +1,85 @@
 import logging
-import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, CallbackQueryHandler, filters
+from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, filters
 from config import ADMIN_IDS
 import database as db
 
 logger = logging.getLogger(__name__)
 
-AP_GROUP_ID, AP_INTERVAL, AP_MESSAGE = range(3)
-
-
-async def autoposter_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    try:
-        jobs = await db.get_all_autoposter_jobs()
-    except Exception:
-        jobs = []
-    text = "\U0001f916 <b>Auto Poster</b>\n\n"
-    if jobs:
-        for j in jobs:
-            status = "\u2705" if j.get("is_active") else "\u23f8"
-            text += f"{status} Group: <code>{j['chat_id']}</code> | Every {j['interval_min']}min\n"
-    else:
-        text += "No auto-poster jobs configured.\n"
-    text += "\nUse /addposter to create a new job.\nUse /delposter <chat_id> to remove."
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("\u2795 Add Job", callback_data="ap_add"),
-         InlineKeyboardButton("\U0001f4cb View Groups", callback_data="ap_groups")],
-        [InlineKeyboardButton("\U0001f519 Admin Panel", callback_data="admin_panel")]
-    ])
-    await query.edit_message_text(text, reply_markup=keyboard, parse_mode="HTML")
-
-
-async def ap_view_groups(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    try:
-        jobs = await db.get_all_autoposter_jobs()
-    except Exception:
-        jobs = []
-    if not jobs:
-        await query.edit_message_text("No auto-poster groups.")
-        return
-    text = "\U0001f4cb <b>Auto Poster Groups</b>\n\n"
-    for j in jobs:
-        text += (f"Chat: <code>{j['chat_id']}</code>\n"
-                 f"Interval: {j['interval_min']} min\n"
-                 f"Active: {'Yes' if j.get('is_active') else 'No'}\n\n")
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("\U0001f519 Auto Poster", callback_data="adm_autoposter")]
-    ])
-    await query.edit_message_text(text, reply_markup=keyboard, parse_mode="HTML")
-
+AP_CHAT, AP_INTERVAL, AP_MESSAGE = range(3)
 
 async def add_poster_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = update.effective_user.id
-    if uid not in ADMIN_IDS:
+    if update.effective_user.id not in ADMIN_IDS:
         return ConversationHandler.END
-    await update.message.reply_text("Send the <b>group/channel chat ID</b>:", parse_mode="HTML")
-    return AP_GROUP_ID
+    await update.message.reply_text("\U0001f916 <b>Add Auto-Poster</b>\n\nSend the chat ID to post to:", parse_mode="HTML")
+    return AP_CHAT
 
-
-async def ap_group_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def ap_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat_id = int(update.message.text.strip())
-    except ValueError:
-        await update.message.reply_text("Invalid chat ID. Send a number:")
-        return AP_GROUP_ID
-    context.user_data["ap_chat_id"] = chat_id
-    await update.message.reply_text("Send the <b>interval in minutes</b> (e.g. 60):", parse_mode="HTML")
-    return AP_INTERVAL
-
-
-async def ap_interval_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        interval = int(update.message.text.strip())
-        if interval < 1:
-            raise ValueError
-    except ValueError:
-        await update.message.reply_text("Invalid interval. Send a positive number:")
+        context.user_data["ap_chat_id"] = chat_id
+        await update.message.reply_text("Send the interval in minutes (e.g., 60):")
         return AP_INTERVAL
-    context.user_data["ap_interval"] = interval
-    await update.message.reply_text("Send the <b>message to auto-post</b> (HTML supported):", parse_mode="HTML")
-    return AP_MESSAGE
+    except ValueError:
+        await update.message.reply_text("Invalid chat ID. Send a number or /cancel:")
+        return AP_CHAT
 
+async def ap_interval(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        mins = int(update.message.text.strip())
+        if mins < 1:
+            raise ValueError
+        context.user_data["ap_interval"] = mins
+        await update.message.reply_text("Send the message to auto-post:")
+        return AP_MESSAGE
+    except ValueError:
+        await update.message.reply_text("Invalid interval. Send a positive number or /cancel:")
+        return AP_INTERVAL
 
-async def ap_message_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = context.user_data.pop("ap_chat_id")
-    interval = context.user_data.pop("ap_interval")
+async def ap_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = context.user_data["ap_chat_id"]
+    interval = context.user_data["ap_interval"]
     message = update.message.text
     try:
         await db.save_autoposter_job(chat_id, interval, message)
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Admin Panel", callback_data="admin_panel")]])
         await update.message.reply_text(
-            f"\u2705 Auto-poster job created!\nChat: <code>{chat_id}</code>\nInterval: {interval} min",
-            parse_mode="HTML"
+            f"\u2705 Auto-poster created!\nChat: {chat_id}\nInterval: {interval}min",
+            reply_markup=kb
         )
     except Exception as e:
         await update.message.reply_text(f"Error: {e}")
     return ConversationHandler.END
 
-
-async def cancel_poster(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def ap_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Cancelled.")
     return ConversationHandler.END
 
-
 async def del_poster(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = update.effective_user.id
-    if uid not in ADMIN_IDS:
+    if update.effective_user.id not in ADMIN_IDS:
         return
-    if not context.args:
+    args = update.message.text.split(maxsplit=1)
+    if len(args) < 2:
         await update.message.reply_text("Usage: /delposter <chat_id>")
         return
     try:
-        chat_id = int(context.args[0])
-    except ValueError:
-        await update.message.reply_text("Invalid chat ID.")
-        return
-    try:
+        chat_id = int(args[1])
         ok = await db.delete_autoposter_job(chat_id)
         if ok:
-            await update.message.reply_text(f"\u2705 Auto-poster for {chat_id} removed.")
+            await update.message.reply_text(f"\u2705 Auto-poster for {chat_id} deleted.")
         else:
             await update.message.reply_text("Job not found.")
     except Exception as e:
         await update.message.reply_text(f"Error: {e}")
 
-
 def get_autoposter_handler():
     return ConversationHandler(
         entry_points=[CommandHandler("addposter", add_poster_start)],
         states={
-            AP_GROUP_ID: [MessageHandler(filters.TEXT & ~filters.COMMAND, ap_group_received)],
-            AP_INTERVAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, ap_interval_received)],
-            AP_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, ap_message_received)],
+            AP_CHAT: [MessageHandler(filters.TEXT & ~filters.COMMAND, ap_chat)],
+            AP_INTERVAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, ap_interval)],
+            AP_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, ap_message)],
         },
-        fallbacks=[CommandHandler("cancel", cancel_poster)],
+        fallbacks=[CommandHandler("cancel", ap_cancel)],
+        per_user=True, per_chat=True
     )
