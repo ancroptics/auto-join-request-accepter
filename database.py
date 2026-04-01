@@ -1,18 +1,24 @@
 import asyncpg
 import logging
 import asyncio
-import re
+from urllib.parse import urlparse
 from config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 pool = None
 
 def parse_db_url(url):
-    pattern = r'postgres(?:ql)?://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)'
-    m = re.match(pattern, url)
-    if m:
-        return dict(user=m.group(1), password=m.group(2), host=m.group(3), port=int(m.group(4)), database=m.group(5))
-    return None
+    try:
+        parsed = urlparse(url)
+        return dict(
+            user=parsed.username,
+            password=parsed.password,
+            host=parsed.hostname,
+            port=parsed.port or 5432,
+            database=parsed.path.lstrip("/")
+        )
+    except Exception:
+        return None
 
 async def get_pool():
     global pool
@@ -75,10 +81,7 @@ async def save_join_request(user_id, chat_id, status="pending"):
 async def update_join_request_status(user_id, chat_id, status):
     p = await get_pool()
     async with p.acquire() as conn:
-        await conn.execute(
-            "UPDATE join_requests SET status=$1 WHERE user_id=$2 AND chat_id=$3",
-            status, user_id, chat_id
-        )
+        await conn.execute("UPDATE join_requests SET status=$1 WHERE user_id=$2 AND chat_id=$3", status, user_id, chat_id)
 
 async def get_all_user_ids():
     p = await get_pool()
@@ -117,8 +120,7 @@ async def get_top_referrers(limit=10):
 async def get_daily_user_growth(days=7):
     p = await get_pool()
     async with p.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT joined_at::date as date, COUNT(*) as count FROM users WHERE joined_at > NOW() - INTERVAL '7 days' GROUP BY joined_at::date ORDER BY date")
+        rows = await conn.fetch("SELECT joined_at::date as date, COUNT(*) as count FROM users WHERE joined_at > NOW() - INTERVAL '7 days' GROUP BY joined_at::date ORDER BY date")
         return [dict(r) for r in rows]
 
 async def get_all_users_for_export():
@@ -136,9 +138,7 @@ async def get_all_templates():
 async def save_template(name, content):
     p = await get_pool()
     async with p.acquire() as conn:
-        await conn.execute(
-            "INSERT INTO templates (name, content, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (name) DO UPDATE SET content=$2",
-            name, content)
+        await conn.execute("INSERT INTO templates (name, content, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (name) DO UPDATE SET content=$2", name, content)
 
 async def delete_template(name):
     p = await get_pool()
