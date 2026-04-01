@@ -1,0 +1,1 @@
+# Auto poster handler - placeholder
