@@ -89,13 +89,13 @@ async def get_all_user_ids():
 async def get_new_user_ids(days=7):
     p = await get_pool()
     async with p.acquire() as conn:
-        rows = await conn.fetch(f"SELECT user_id FROM users WHERE is_banned=false AND joined_at > NOW() - INTERVAL '{days} days'")
+        rows = await conn.fetch("SELECT user_id FROM users WHERE is_banned=false AND joined_at > NOW() - INTERVAL '7 days'")
         return [r["user_id"] for r in rows]
 
 async def get_active_user_ids(days=30):
     p = await get_pool()
     async with p.acquire() as conn:
-        rows = await conn.fetch(f"SELECT user_id FROM users WHERE is_banned=false AND last_active > NOW() - INTERVAL '{days} days'")
+        rows = await conn.fetch("SELECT user_id FROM users WHERE is_banned=false AND last_active > NOW() - INTERVAL '30 days'")
         return [r["user_id"] for r in rows]
 
 async def set_user_banned(user_id, banned=True):
@@ -118,8 +118,7 @@ async def get_daily_user_growth(days=7):
     p = await get_pool()
     async with p.acquire() as conn:
         rows = await conn.fetch(
-            """SELECT joined_at::date as date, COUNT(*) as count FROM users
-            WHERE joined_at > NOW() - INTERVAL '$1 days' GROUP BY joined_at::date ORDER BY date""", days)
+            "SELECT joined_at::date as date, COUNT(*) as count FROM users WHERE joined_at > NOW() - INTERVAL '7 days' GROUP BY joined_at::date ORDER BY date")
         return [dict(r) for r in rows]
 
 async def get_all_users_for_export():
