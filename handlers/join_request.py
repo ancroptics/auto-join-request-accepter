@@ -8,13 +8,13 @@ import database as db
 logger = logging.getLogger(__name__)
 
 DEFAULT_WELCOME = (
-    "Hey {first_name}! \ud83d\udc4b\n\n"
-    "Welcome to <b>{channel_name}</b>! \ud83c\udf89\n\n"
+    "Hey {first_name}! \n\n"
+    "Welcome to <b>{channel_name}</b>! \n\n"
     "You've been approved to join our community.\n\n"
-    "\ud83c\udf81 Want to earn rewards? Share your referral link:\n"
+    "Want to earn rewards? Share your referral link:\n"
     "<code>{referral_link}</code>\n\n"
     "You'll earn coins for every friend who joins!\n\n"
-    "\ud83d\udcb0 Current Balance: {coins} coins"
+    "Current Balance: {coins} coins"
 )
 
 async def handle_join_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -54,7 +54,7 @@ async def handle_join_request(update: Update, context: ContextTypes.DEFAULT_TYPE
             try:
                 await context.bot.send_message(
                     chat_id=admin_id,
-                    text=f"\u2705 <b>Join Request Approved</b>\n\ud83d\udc64 {user.first_name} (ID: <code>{user.id}</code>)\n\ud83d\udce2 {chat.title}",
+                    text=f"<b>Join Request Approved</b>\n{user.first_name} (ID: <code>{user.id}</code>)\n{chat.title}",
                     parse_mode="HTML"
                 )
             except Exception:
