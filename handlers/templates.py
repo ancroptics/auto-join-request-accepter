@@ -13,7 +13,7 @@ async def templates_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     templates = await db.get_all_templates()
-    text = "📝 <b>Message Templates</b>\n\n"
+    text = "\U0001f4dd <b>Message Templates</b>\n\n"
     if templates:
         for i, t in enumerate(templates, 1):
             text += f"{i}. <b>{t['name']}</b>\n"
@@ -21,8 +21,8 @@ async def templates_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text += "No templates yet.\n"
     text += "\nUse /addtemplate to create a new template.\nUse /deltemplate <name> to delete."
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("➕ Add Template", callback_data="tpl_add")],
-        [InlineKeyboardButton("🔙 Admin Panel", callback_data="admin_panel")]
+        [InlineKeyboardButton("\u2795 Add Template", callback_data="tpl_add")],
+        [InlineKeyboardButton("\U0001f519 Admin Panel", callback_data="admin_panel")]
     ])
     await query.edit_message_text(text, reply_markup=keyboard, parse_mode="HTML")
 
@@ -49,7 +49,7 @@ async def template_content_received(update: Update, context: ContextTypes.DEFAUL
     name = context.user_data.pop("tpl_name", "unnamed")
     content = update.message.text
     await db.save_template(name, content)
-    await update.message.reply_text(f"✅ Template <b>{name}</b> saved!", parse_mode="HTML")
+    await update.message.reply_text(f"\u2705 Template <b>{name}</b> saved!", parse_mode="HTML")
     return ConversationHandler.END
 
 
@@ -69,12 +69,12 @@ async def del_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
     name = " ".join(args)
     ok = await db.delete_template(name)
     if ok:
-        await update.message.reply_text(f"✅ Template '{name}' deleted.")
+        await update.message.reply_text(f"\u2705 Template '{name}' deleted.")
     else:
-        await update.message.reply_text(f"❌ Template '{name}' not found.")
+        await update.message.reply_text(f"\u274c Template '{name}' not found.")
 
 
-def get_template_conv_handler():
+def get_template_handler():
     return ConversationHandler(
         entry_points=[CommandHandler("addtemplate", add_template_start)],
         states={
