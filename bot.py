@@ -16,7 +16,7 @@ db_connected = False
 bot_status = "starting"
 bot_error = None
 bot_username = None
-CODE_VERSION = "v2.2-panel-fix"
+CODE_VERSION = "v2.3-callback-fix"
 
 def run_health_server_in_thread(port):
     import threading
