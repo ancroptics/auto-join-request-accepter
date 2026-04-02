@@ -228,6 +228,63 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             from handlers.admin_panel import channels_panel
             await channels_panel(update, context)
 
+
+        # ===== CHANNEL CONTROL PANEL =====
+        elif data == "cp_main":
+            from handlers.channel_manage import cp_main
+            await cp_main(update, context)
+
+        elif data == "cp_channels_list":
+            from handlers.channel_manage import cp_channels_list
+            await cp_channels_list(update, context)
+
+        elif data == "cp_pending_all":
+            from handlers.channel_manage import cp_pending_all
+            await cp_pending_all(update, context)
+
+        elif data == "cp_settings":
+            from handlers.channel_manage import cp_settings
+            await cp_settings(update, context)
+
+        elif data.startswith("cp_ch_"):
+            chat_id = int(data.replace("cp_ch_", ""))
+            from handlers.channel_manage import cp_channel_detail
+            await cp_channel_detail(update, context, chat_id)
+
+        elif data.startswith("cp_approve_all_"):
+            chat_id = int(data.replace("cp_approve_all_", ""))
+            from handlers.channel_manage import cp_approve_all
+            await cp_approve_all(update, context, chat_id)
+
+        elif data.startswith("cp_approve_n_"):
+            chat_id = int(data.replace("cp_approve_n_", ""))
+            from handlers.channel_manage import cp_approve_n_ask
+            await cp_approve_n_ask(update, context, chat_id)
+
+        elif data.startswith("cp_approve_rand_"):
+            chat_id = int(data.replace("cp_approve_rand_", ""))
+            from handlers.channel_manage import cp_approve_rand_ask
+            await cp_approve_rand_ask(update, context, chat_id)
+
+        elif data.startswith("cp_do_approve_n_"):
+            parts = data.replace("cp_do_approve_n_", "").rsplit("_", 1)
+            chat_id = int(parts[0])
+            count = int(parts[1])
+            from handlers.channel_manage import cp_do_approve_n
+            await cp_do_approve_n(update, context, chat_id, count)
+
+        elif data.startswith("cp_do_approve_rand_"):
+            parts = data.replace("cp_do_approve_rand_", "").rsplit("_", 1)
+            chat_id = int(parts[0])
+            count = int(parts[1])
+            from handlers.channel_manage import cp_do_approve_rand
+            await cp_do_approve_rand(update, context, chat_id, count)
+
+        elif data.startswith("cp_toggle_"):
+            chat_id = int(data.replace("cp_toggle_", ""))
+            from handlers.channel_manage import cp_toggle_auto
+            await cp_toggle_auto(update, context, chat_id)
+
         else:
             logger.warning(f"Unhandled callback: {data}")
             await query.answer("Unknown action")
