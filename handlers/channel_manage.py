@@ -455,9 +455,15 @@ async def handle_channel_callback(update: Update, context: ContextTypes.DEFAULT_
             await query.answer("Unknown action", show_alert=True)
     except ValueError as e:
         logger.error(f"Bad callback data \'{data}\': {e}")
-        await query.answer("Invalid action", show_alert=True)
+        try:
+            await query.answer("Invalid action", show_alert=True)
+        except Exception:
+            pass
     except Exception as e:
         logger.error(f"Callback error \'{data}\': {e}")
         import traceback
         traceback.print_exc()
-        await query.answer(f"Error: {str(e)[:80]}", show_alert=True)
+        try:
+            await query.answer(f"Error: {str(e)[:80]}", show_alert=True)
+        except Exception:
+            pass
