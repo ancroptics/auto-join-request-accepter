@@ -308,6 +308,18 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
     handler = routes.get(data)
     if handler:
-        await handler(update, context)
+        try:
+            await handler(update, context)
+        except Exception as e:
+            logger.error(f"Admin callback error '{data}': {e}")
+            import traceback
+            traceback.print_exc()
+            try:
+                await query.answer(f"Error: {str(e)[:80]}", show_alert=True)
+            except Exception:
+                pass
     else:
-        await query.answer("Unknown admin action", show_alert=True)
+        try:
+            await query.answer("Unknown admin action", show_alert=True)
+        except Exception:
+            pass
