@@ -1,1 +1,261 @@
-aW1wb3J0IGxvZ2dpbmcKaW1wb3J0IGFzeW5jaW8KaW1wb3J0IHRpbWUKaW1wb3J0IHRyYWNlYmFjawppbXBvcnQgb3MKCmxvZ2dpbmcuYmFzaWNDb25maWcoCiAgICBmb3JtYXQ9IiUoYXNjdGltZSlzIC0gJShuYW1lKXMgLSAlKGxldmVsbmFtZSlzIC0gJShtZXNzYWdlKXMiLAogICAgbGV2ZWw9bG9nZ2luZy5JTkZPCikKbG9nZ2VyID0gbG9nZ2luZy5nZXRMb2dnZXIoX19uYW1lX18pCgpzdGFydF90aW1lID0gdGltZS50aW1lKCkKZGJfY29ubmVjdGVkID0gRmFsc2UKYm90X3N0YXR1cyA9ICJzdGFydGluZyIKYm90X2Vycm9yID0gTm9uZQpib3RfdXNlcm5hbWUgPSBOb25lCkNPREVfVkVSU0lPTiA9ICJ2Mi4xLWRtLW5vdGlmeSIKCmRlZiBydW5faGVhbHRoX3NlcnZlcl9pbl90aHJlYWQocG9ydCk6CiAgICBpbXBvcnQgdGhyZWFkaW5nCiAgICBmcm9tIGh0dHAuc2VydmVyIGltcG9ydCBIVFRQU2VydmVyLCBCYXNlSFRUUFJlcXVlc3RIYW5kbGVyCiAgICBpbXBvcnQganNvbiBhcyBqc29uX21vZAoKICAgIGNsYXNzIEhhbmRsZXIoQmFzZUhUVFBSZXF1ZXN0SGFuZGxlcik6CiAgICAgICAgZGVmIGRvX0dFVChzZWxmKToKICAgICAgICAgICAgc2VsZi5zZW5kX3Jlc3BvbnNlKDIwMCkKICAgICAgICAgICAgc2VsZi5zZW5kX2hlYWRlcigiQ29udGVudC1UeXBlIiwgImFwcGxpY2F0aW9uL2pzb24iKQogICAgICAgICAgICBzZWxmLmVuZF9oZWFkZXJzKCkKICAgICAgICAgICAgZGF0YSA9IHsKICAgICAgICAgICAgICAgICJzdGF0dXMiOiBib3Rfc3RhdHVzLAogICAgICAgICAgICAgICAgInVwdGltZSI6IGludCh0aW1lLnRpbWUoKSAtIHN0YXJ0X3RpbWUpLAogICAgICAgICAgICAgICAgImRiIjogZGJfY29ubmVjdGVkLAogICAgICAgICAgICAgICAgImJvdF91c2VybmFtZSI6IGJvdF91c2VybmFtZSwKICAgICAgICAgICAgICAgICJlcnJvciI6IGJvdF9lcnJvciwKICAgICAgICAgICAgICAgICJ2ZXJzaW9uIjogInYyLjEtZG0tbm90aWZ5IgogICAgICAgICAgICB9CiAgICAgICAgICAgIHNlbGYud2ZpbGUud3JpdGUoanNvbl9tb2QuZHVtcHMoZGF0YSkuZW5jb2RlKCkpCiAgICAgICAgZGVmIGxvZ19tZXNzYWdlKHNlbGYsIGZvcm1hdCwgKmFyZ3MpOgogICAgICAgICAgICBwYXNzCgogICAgc2VydmVyID0gSFRUUFNlcnZlcigoIjAuMC4wLjAiLCBwb3J0KSwgSGFuZGxlcikKICAgIHQgPSB0aHJlYWRpbmcuVGhyZWFkKHRhcmdldD1zZXJ2ZXIuc2VydmVfZm9yZXZlciwgZGFlbW9uPVRydWUpCiAgICB0LnN0YXJ0KCkKICAgIGxvZ2dlci5pbmZvKGYiSGVhbHRoIHNlcnZlciBydW5uaW5nIG9uIHBvcnQge3BvcnR9IikKCgphc3luYyBkZWYgc2VsZl9waW5nX2xvb3AocG9ydCk6CiAgICAiIiJQaW5nIG93biBoZWFsdGggZW5kcG9pbnQgZXZlcnkgNCBtaW51dGVzIHRvIHByZXZlbnQgUmVuZGVyIGZyZWUgdGllciBzbGVlcC4iIiIKICAgIGltcG9ydCB1cmxsaWIucmVxdWVzdAogICAgdXJsID0gZiJodHRwOi8vbG9jYWxob3N0Ontwb3J0fS8iCiAgICB3aGlsZSBUcnVlOgogICAgICAgIGF3YWl0IGFzeW5jaW8uc2xlZXAoMjQwKQogICAgICAgIHRyeToKICAgICAgICAgICAgdXJsbGliLnJlcXVlc3QudXJsb3Blbih1cmwsIHRpbWVvdXQ9NSkKICAgICAgICAgICAgbG9nZ2VyLmluZm8oIlNlbGYtcGluZyBPSyIpCiAgICAgICAgZXhjZXB0IEV4Y2VwdGlvbiBhcyBlOgogICAgICAgICAgICBsb2dnZXIud2FybmluZyhmIlNlbGYtcGluZyBmYWlsZWQ6IHtlfSIpCgoKYXN5bmMgZGVmIHBvc3RfaW5pdChhcHBsaWNhdGlvbik6CiAgICBnbG9iYWwgZGJfY29ubmVjdGVkLCBib3Rfc3RhdHVzLCBib3RfdXNlcm5hbWUKICAgIHRyeToKICAgICAgICBtZSA9IGF3YWl0IGFwcGxpY2F0aW9uLmJvdC5nZXRfbWUoKQogICAgICAgIGJvdF91c2VybmFtZSA9IG1lLnVzZXJuYW1lCiAgICAgICAgbG9nZ2VyLmluZm8oZiJCb3QgYXV0aGVudGljYXRlZCBhcyBAe2JvdF91c2VybmFtZX0iKQogICAgZXhjZXB0IEV4Y2VwdGlvbiBhcyBlOgogICAgICAgIGxvZ2dlci5lcnJvcihmIkJvdCBhdXRoIGNoZWNrIGZhaWxlZDoge2V9IikKCiAgICB0cnk6CiAgICAgICAgaW1wb3J0IGRhdGFiYXNlIGFzIGRiCiAgICAgICAgYXdhaXQgZGIuaW5pdF9kYigpCiAgICAgICAgZGJfY29ubmVjdGVkID0gVHJ1ZQogICAgICAgIGxvZ2dlci5pbmZvKCJEYXRhYmFzZSBpbml0aWFsaXplZCBzdWNjZXNzZnVsbHkiKQogICAgZXhjZXB0IEV4Y2VwdGlvbiBhcyBlOgogICAgICAgIGxvZ2dlci5lcnJvcihmIkRhdGFiYXNlIGluaXQgZmFpbGVkIChib3Qgd2lsbCBydW4gd2l0aG91dCBEQik6IHtlfSIpCiAgICAgICAgdHJhY2ViYWNrLnByaW50X2V4YygpCgogICAgdHJ5OgogICAgICAgIGZyb20gc2VydmljZXMuc2NoZWR1bGVyX3NlcnZpY2UgaW1wb3J0IHJ1bl9zY2hlZHVsZXIKICAgICAgICBhc3luY2lvLmNyZWF0ZV90YXNrKHJ1bl9zY2hlZHVsZXIoYXBwbGljYXRpb24uYm90KSkKICAgICAgICBsb2dnZXIuaW5mbygiU2NoZWR1bGVyIHN0YXJ0ZWQiKQogICAgZXhjZXB0IEV4Y2VwdGlvbiBhcyBlOgogICAgICAgIGxvZ2dlci5lcnJvcihmIlNjaGVkdWxlciBzdGFydCBmYWlsZWQ6IHtlfSIpCgogICAgcG9ydCA9IGludChvcy5lbnZpcm9uLmdldCgiUE9SVCIsICIxMDAwMCIpKQogICAgYXN5bmNpby5jcmVhdGVfdGFzayhzZWxmX3BpbmdfbG9vcChwb3J0KSkKICAgIGxvZ2dlci5pbmZvKCJTZWxmLXBpbmcga2VlcC1hbGl2ZSBzdGFydGVkIChldmVyeSA0IG1pbikiKQoKICAgIGJvdF9zdGF0dXMgPSAicG9sbGluZyIKCgphc3luYyBkZWYgaGFuZGxlX3dlbGNvbWVfbWVzc2FnZV9zZXQodXBkYXRlLCBjb250ZXh0KToKICAgIGNoYXRfaWQgPSBjb250ZXh0LnVzZXJfZGF0YS5nZXQoInNldF93ZWxjb21lX2NoYXRfaWQiKQogICAgaWYgbm90IGNoYXRfaWQ6CiAgICAgICAgcmV0dXJuCiAgICAjIEFsbG93IGFkbWlucyBhbmQgY2hhbm5lbCBvd25lcnMgdG8gc2V0IHdlbGNvbWUgbWVzc2FnZXMKICAgIGZyb20gY29uZmlnIGltcG9ydCBBRE1JTl9JRFMKICAgIHVzZXJfaWQgPSB1cGRhdGUuZWZmZWN0aXZlX3VzZXIuaWQKICAgIGlmIHVzZXJfaWQgbm90IGluIEFETUlOX0lEUzoKICAgICAgICBpZiBjaGF0X2lkICE9ICJnbG9iYWwiOgogICAgICAgICAgICBpbXBvcnQgZGF0YWJhc2UgYXMgZGJjCiAgICAgICAgICAgIGNoID0gYXdhaXQgZGJjLmdldF9jaGFubmVsKGNoYXRfaWQpCiAgICAgICAgICAgIGlmIG5vdCBjaCBvciBjaC5nZXQoImFkZGVkX2J5IikgIT0gdXNlcl9pZDoKICAgICAgICAgICAgICAgIHJldHVybgogICAgICAgIGVsc2U6CiAgICAgICAgICAgIHJldHVybgogICAgd2VsY29tZV90ZXh0ID0gdXBkYXRlLm1lc3NhZ2UudGV4dAogICAgaWYgd2VsY29tZV90ZXh0ID09ICIvY2FuY2VsIjoKICAgICAgICBkZWwgY29udGV4dC51c2VyX2RhdGFbInNldF93ZWxjb21lX2NoYXRfaWQiXQogICAgICAgIGF3YWl0IHVwZGF0ZS5tZXNzYWdlLnJlcGx5X3RleHQoIlx1Mjc0YyBDYW5jZWxsZWQuIikKICAgICAgICByZXR1cm4KICAgIGltcG9ydCBkYXRhYmFzZSBhcyBkYgogICAgdHJ5OgogICAgICAgIGlmIGNoYXRfaWQgPT0gImdsb2JhbCI6CiAgICAgICAgICAgIGF3YWl0IGRiLnVwZGF0ZV9ib3Rfc2V0dGluZygid2VsY29tZV9tZXNzYWdlIiwgd2VsY29tZV90ZXh0KQogICAgICAgIGVsc2U6CiAgICAgICAgICAgIGF3YWl0IGRiLnVwZGF0ZV9jaGFubmVsX3dlbGNvbWUoY2hhdF9pZCwgd2VsY29tZV90ZXh0KQogICAgICAgIGRlbCBjb250ZXh0LnVzZXJfZGF0YVsic2V0X3dlbGNvbWVfY2hhdF9pZCJdCiAgICAgICAgZnJvbSB0ZWxlZ3JhbSBpbXBvcnQgSW5saW5lS2V5Ym9hcmRCdXR0b24sIElubGluZUtleWJvYXJkTWFya3VwCiAgICAgICAgYmFja19jYiA9ICJjcF9zZXR0aW5ncyIgaWYgY2hhdF9pZCA9PSAiZ2xvYmFsIiBlbHNlIGYiY3BfY2hfe2NoYXRfaWR9IgogICAgICAgIGtiID0gSW5saW5lS2V5Ym9hcmRNYXJrdXAoW1tJbmxpbmVLZXlib2FyZEJ1dHRvbigiXFUwMDAxZjUxOSBCYWNrIiwgY2FsbGJhY2tfZGF0YT1iYWNrX2NiKV1dKQogICAgICAgIGF3YWl0IHVwZGF0ZS5tZXNzYWdlLnJlcGx5X3RleHQoCiAgICAgICAgICAgIGYiXHUyNzA1IDxiPldlbGNvbWUgbWVzc2FnZSB1cGRhdGVkITwvYj5cblxuPGI+UHJldmlldzo8L2I+XG57d2VsY29tZV90ZXh0fSIsCiAgICAgICAgICAgIHBhcnNlX21vZGU9IkhUTUwiLCByZXBseV9tYXJrdXA9a2IKICAgICAgICApCiAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgbG9nZ2VyLmVycm9yKGYiRmFpbGVkIHRvIHVwZGF0ZSB3ZWxjb21lOiB7ZX0iKQogICAgICAgIGF3YWl0IHVwZGF0ZS5tZXNzYWdlLnJlcGx5X3RleHQoZiJcdTI3NGMgRXJyb3I6IHtlfSIpCgoKYXN5bmMgZGVmIHBhbmVsX2NvbW1hbmQodXBkYXRlLCBjb250ZXh0KToKICAgICIiIk9wZW4gdGhlIGNoYW5uZWwgY29udHJvbCBwYW5lbC4iIiIKICAgIGZyb20gdGVsZWdyYW0gaW1wb3J0IElubGluZUtleWJvYXJkQnV0dG9uLCBJbmxpbmVLZXlib2FyZE1hcmt1cAogICAga2IgPSBJbmxpbmVLZXlib2FyZE1hcmt1cChbCiAgICAgICAgW0lubGluZUtleWJvYXJkQnV0dG9uKCJcVTAwMDFmNGNiIE15IENoYW5uZWxzIiwgY2FsbGJhY2tfZGF0YT0iY3BfY2hhbm5lbHNfbGlzdCIpXSwKICAgICAgICBbSW5saW5lS2V5Ym9hcmRCdXR0b24oIlxVMDAwMWY0NjUgUGVuZGluZyBSZXF1ZXN0cyIsIGNhbGxiYWNrX2RhdGE9ImNwX3BlbmRpbmdfYWxsIildLAogICAgICAgIFtJbmxpbmVLZXlib2FyZEJ1dHRvbigiXHUyNjk5XHVmZTBmIFNldHRpbmdzIiwgY2FsbGJhY2tfZGF0YT0iY3Bfc2V0dGluZ3MiKV0sCiAgICBdKQogICAgYXdhaXQgdXBkYXRlLm1lc3NhZ2UucmVwbHlfdGV4dCgKICAgICAgICAiXFUwMDAxZjM5YiA8Yj5Db250cm9sIFBhbmVsPC9iPlxuXG4iCiAgICAgICAgIk1hbmFnZSB5b3VyIGNoYW5uZWxzLCBhcHByb3ZlIGpvaW4gcmVxdWVzdHMsIGFuZCBjb25maWd1cmUgc2V0dGluZ3MuIiwKICAgICAgICBwYXJzZV9tb2RlPSJIVE1MIiwgcmVwbHlfbWFya3VwPWtiCiAgICApCgoKYXN5bmMgZGVmIGFkZG1hbmRhdG9yeV9jb21tYW5kKHVwZGF0ZSwgY29udGV4dCk6CiAgICAiIiJBZGQgYSBtYW5kYXRvcnkgY2hhbm5lbC4gVXNhZ2U6IC9hZGRtYW5kYXRvcnkgPGNoYW5uZWxfaWQ+IDxAdXNlcm5hbWU+IiIiCiAgICBmcm9tIGNvbmZpZyBpbXBvcnQgQURNSU5fSURTCiAgICBpZiB1cGRhdGUuZWZmZWN0aXZlX3VzZXIuaWQgbm90IGluIEFETUlOX0lEUzoKICAgICAgICByZXR1cm4KICAgIGFyZ3MgPSBjb250ZXh0LmFyZ3MKICAgIGlmIG5vdCBhcmdzIG9yIGxlbihhcmdzKSA8IDE6CiAgICAgICAgYXdhaXQgdXBkYXRlLm1lc3NhZ2UucmVwbHlfdGV4dCgKICAgICAgICAgICAgIlxVMDAwMWY1MTIgPGI+QWRkIE1hbmRhdG9yeSBDaGFubmVsPC9iPlxuXG4iCiAgICAgICAgICAgICJVc2FnZTogPGNvZGU+L2FkZG1hbmRhdG9yeSAmbHQ7Y2hhbm5lbF9pZCZndDsgW0B1c2VybmFtZV08L2NvZGU+XG5cbiIKICAgICAgICAgICAgIkV4YW1wbGU6IDxjb2RlPi9hZGRtYW5kYXRvcnkgLTEwMDEyMzQ1Njc4OTAgQG15Y2hhbm5lbDwvY29kZT4iLAogICAgICAgICAgICBwYXJzZV9tb2RlPSJIVE1MIgogICAgICAgICkKICAgICAgICByZXR1cm4KICAgIGltcG9ydCBkYXRhYmFzZSBhcyBkYgogICAgdHJ5OgogICAgICAgIGNoYXRfaWQgPSBpbnQoYXJnc1swXSkKICAgICAgICB1c2VybmFtZSA9IGFyZ3NbMV0gaWYgbGVuKGFyZ3MpID4gMSBlbHNlIE5vbmUKICAgICAgICB0aXRsZSA9IE5vbmUKICAgICAgICB0cnk6CiAgICAgICAgICAgIGNoYXQgPSBhd2FpdCBjb250ZXh0LmJvdC5nZXRfY2hhdChjaGF0X2lkKQogICAgICAgICAgICB0aXRsZSA9IGNoYXQudGl0bGUKICAgICAgICAgICAgaWYgbm90IHVzZXJuYW1lIGFuZCBjaGF0LnVzZXJuYW1lOgogICAgICAgICAgICAgICAgdXNlcm5hbWUgPSBmIkB7Y2hhdC51c2VybmFtZX0iCiAgICAgICAgZXhjZXB0OgogICAgICAgICAgICBwYXNzCiAgICAgICAgYXdhaXQgZGIuYWRkX21hbmRhdG9yeV9jaGFubmVsKGNoYXRfaWQsIHRpdGxlLCB1c2VybmFtZSkKICAgICAgICBmcm9tIHRlbGVncmFtIGltcG9ydCBJbmxpbmVLZXlib2FyZEJ1dHRvbiwgSW5saW5lS2V5Ym9hcmRNYXJrdXAKICAgICAgICBrYiA9IElubGluZUtleWJvYXJkTWFya3VwKFtbSW5saW5lS2V5Ym9hcmRCdXR0b24oIlxVMDAwMWY1MTIgTWFuZGF0b3J5IENoYW5uZWxzIiwgY2FsbGJhY2tfZGF0YT0ic2V0X21hbmRhdG9yeSIpXV0pCiAgICAgICAgYXdhaXQgdXBkYXRlLm1lc3NhZ2UucmVwbHlfdGV4dCgKICAgICAgICAgICAgZiJcdTI3MDUgQWRkZWQgbWFuZGF0b3J5IGNoYW5uZWwhXG5cbiIKICAgICAgICAgICAgZiJJRDogPGNvZGU+e2NoYXRfaWR9PC9jb2RlPlxuIgogICAgICAgICAgICBmIlRpdGxlOiB7dGl0bGUgb3IgJ1Vua25vd24nfVxuIgogICAgICAgICAgICBmIlVzZXJuYW1lOiB7dXNlcm5hbWUgb3IgJ04vQSd9IiwKICAgICAgICAgICAgcGFyc2VfbW9kZT0iSFRNTCIsIHJlcGx5X21hcmt1cD1rYgogICAgICAgICkKICAgIGV4Y2VwdCBWYWx1ZUVycm9yOgogICAgICAgIGF3YWl0IHVwZGF0ZS5tZXNzYWdlLnJlcGx5X3RleHQoIlx1Mjc0YyBJbnZhbGlkIGNoYW5uZWwgSUQuIE11c3QgYmUgYSBudW1iZXIuIikKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICBhd2FpdCB1cGRhdGUubWVzc2FnZS5yZXBseV90ZXh0KGYiXHUyNzRjIEVycm9yOiB7ZX0iKQoKCmFzeW5jIGRlZiBhZG1pbl9jb21tYW5kKHVwZGF0ZSwgY29udGV4dCk6CiAgICBmcm9tIGhhbmRsZXJzLmFkbWluX3BhbmVsIGltcG9ydCBhZG1pbl9wYW5lbAogICAgYXdhaXQgYWRtaW5fcGFuZWwodXBkYXRlLCBjb250ZXh0KQoKCmRlZiBtYWluKCk6CiAgICBnbG9iYWwgYm90X3N0YXR1cywgYm90X2Vycm9yCiAgICBwb3J0ID0gaW50KG9zLmVudmlyb24uZ2V0KCJQT1JUIiwgIjEwMDAwIikpCiAgICBydW5faGVhbHRoX3NlcnZlcl9pbl90aHJlYWQocG9ydCkKCiAgICB0cnk6CiAgICAgICAgZnJvbSB0ZWxlZ3JhbS5leHQgaW1wb3J0IEFwcGxpY2F0aW9uLCBDb21tYW5kSGFuZGxlciBhcyBDbWRIYW5kbGVyLCBDaGF0Sm9pblJlcXVlc3RIYW5kbGVyLCBDaGF0TWVtYmVySGFuZGxlciwgQ2FsbGJhY2tRdWVyeUhhbmRsZXIsIE1lc3NhZ2VIYW5kbGVyLCBmaWx0ZXJzCiAgICAgICAgZnJvbSBjb25maWcgaW1wb3J0IEJPVF9UT0tFTgogICAgICAgIGZyb20gaGFuZGxlcnMuc3RhcnQgaW1wb3J0IHN0YXJ0X2NvbW1hbmQKICAgICAgICBmcm9tIGhhbmRsZXJzLnVzZXJfY29tbWFuZHMgaW1wb3J0IHJlZmVycmFsX2NvbW1hbmQsIGJhbGFuY2VfY29tbWFuZCwgbGVhZGVyYm9hcmRfY29tbWFuZCwgbXlzdGF0c19jb21tYW5kLCBoZWxwX2NvbW1hbmQKICAgICAgICBmcm9tIGhhbmRsZXJzLmpvaW5fcmVxdWVzdCBpbXBvcnQgaGFuZGxlX2pvaW5fcmVxdWVzdAogICAgICAgIGZyb20gaGFuZGxlcnMuY2FsbGJhY2tzIGltcG9ydCBjYWxsYmFja19yb3V0ZXIKICAgICAgICBmcm9tIGhhbmRsZXJzLmJyb2FkY2FzdCBpbXBvcnQgZ2V0X2Jyb2FkY2FzdF9oYW5kbGVyCiAgICAgICAgZnJvbSBoYW5kbGVycy50ZW1wbGF0ZXMgaW1wb3J0IGdldF90ZW1wbGF0ZV9oYW5kbGVyLCBkZWxfdGVtcGxhdGUKICAgICAgICBmcm9tIGhhbmRsZXJzLnVzZXJfbWdtdCBpbXBvcnQgZ2V0X3VzZXJfbWdtdF9oYW5kbGVyCiAgICAgICAgZnJvbSBoYW5kbGVycy5hdXRvX3Bvc3RlciBpbXBvcnQgZ2V0X2F1dG9wb3N0ZXJfaGFuZGxlciwgZGVsX3Bvc3RlcgoKICAgICAgICBsb2dnZXIuaW5mbyhmIkFsbCBpbXBvcnRzIHN1Y2Nlc3NmdWwuIFRva2VuIGxlbmd0aDoge2xlbihCT1RfVE9LRU4pfSIpCiAgICAgICAgYm90X3N0YXR1cyA9ICJidWlsZGluZyIKCiAgICAgICAgYXBwID0gQXBwbGljYXRpb24uYnVpbGRlcigpLnRva2VuKEJPVF9UT0tFTikucG9zdF9pbml0KHBvc3RfaW5pdCkuYnVpbGQoKQoKICAgICAgICAjIENvbnZlcnNhdGlvbkhhbmRsZXJzIGZpcnN0ICh0aGV5IG5lZWQgcHJpb3JpdHkpCiAgICAgICAgYXBwLmFkZF9oYW5kbGVyKGdldF9icm9hZGNhc3RfaGFuZGxlcigpKQogICAgICAgIGFwcC5hZGRfaGFuZGxlcihnZXRfdGVtcGxhdGVfaGFuZGxlcigpKQogICAgICAgIGFwcC5hZGRfaGFuZGxlcihnZXRfdXNlcl9tZ210X2hhbmRsZXIoKSkKICAgICAgICBhcHAuYWRkX2hhbmRsZXIoZ2V0X2F1dG9wb3N0ZXJfaGFuZGxlcigpKQoKICAgICAgICAjIENvbW1hbmQgaGFuZGxlcnMKICAgICAgICBhcHAuYWRkX2hhbmRsZXIoQ21kSGFuZGxlcigic3RhcnQiLCBzdGFydF9jb21tYW5kKSkKICAgICAgICBhcHAuYWRkX2hhbmRsZXIoQ21kSGFuZGxlcigicmVmZXJyYWwiLCByZWZlcnJhbF9jb21tYW5kKSkKICAgICAgICBhcHAuYWRkX2hhbmRsZXIoQ21kSGFuZGxlcigiYmFsYW5jZSIsIGJhbGFuY2VfY29tbWFuZCkpCiAgICAgICAgYXBwLmFkZF9oYW5kbGVyKENtZEhhbmRsZXIoImxlYWRlcmJvYXJkIiwgbGVhZGVyYm9hcmRfY29tbWFuZCkpCiAgICAgICAgYXBwLmFkZF9oYW5kbGVyKENtZEhhbmRsZXIoIm15c3RhdHMiLCBteXN0YXRzX2NvbW1hbmQpKQogICAgICAgIGFwcC5hZGRfaGFuZGxlcihDbWRIYW5kbGVyKCJoZWxwIiwgaGVscF9jb21tYW5kKSkKICAgICAgICBhcHAuYWRkX2hhbmRsZXIoQ21kSGFuZGxlcigicGFuZWwiLCBwYW5lbF9jb21tYW5kKSkKICAgICAgICBhcHAuYWRkX2hhbmRsZXIoQ21kSGFuZGxlcigiYWRtaW4iLCBhZG1pbl9jb21tYW5kKSkKICAgICAgICBhcHAuYWRkX2hhbmRsZXIoQ21kSGFuZGxlcigiYWRkbWFuZGF0b3J5IiwgYWRkbWFuZGF0b3J5X2NvbW1hbmQpKQogICAgICAgIGFwcC5hZGRfaGFuZGxlcihDbWRIYW5kbGVyKCJkZWx0ZW1wbGF0ZSIsIGRlbF90ZW1wbGF0ZSkpCiAgICAgICAgYXBwLmFkZF9oYW5kbGVyKENtZEhhbmRsZXIoImRlbHBvc3RlciIsIGRlbF9wb3N0ZXIpKQoKICAgICAgICAjIEV2ZW50IGhhbmRsZXJzCiAgICAgICAgZnJvbSBoYW5kbGVycy5jaGFubmVsX21hbmFnZSBpbXBvcnQgaGFuZGxlX215X2NoYXRfbWVtYmVyCiAgICAgICAgYXBwLmFkZF9oYW5kbGVyKENoYXRNZW1iZXJIYW5kbGVyKGhhbmRsZV9teV9jaGF0X21lbWJlciwgQ2hhdE1lbWJlckhhbmRsZXIuTVlfQ0hBVF9NRU1CRVIpKQogICAgICAgIGFwcC5hZGRfaGFuZGxlcihDaGF0Sm9pblJlcXVlc3RIYW5kbGVyKGhhbmRsZV9qb2luX3JlcXVlc3QpKQogICAgICAgIGFwcC5hZGRfaGFuZGxlcihDYWxsYmFja1F1ZXJ5SGFuZGxlcihjYWxsYmFja19yb3V0ZXIpKQogICAgICAgIGFwcC5hZGRfaGFuZGxlcihNZXNzYWdlSGFuZGxlcihmaWx0ZXJzLlRFWFQgJiB+ZmlsdGVycy5DT01NQU5ELCBoYW5kbGVfd2VsY29tZV9tZXNzYWdlX3NldCkpCgogICAgICAgICMgRXJyb3IgaGFuZGxlcgogICAgICAgIGFzeW5jIGRlZiBlcnJvcl9oYW5kbGVyKHVwZGF0ZSwgY29udGV4dCk6CiAgICAgICAgICAgIGxvZ2dlci5lcnJvcihmIkV4Y2VwdGlvbiB3aGlsZSBoYW5kbGluZyBhbiB1cGRhdGU6IHtjb250ZXh0LmVycm9yfSIpCiAgICAgICAgICAgIHRyYWNlYmFjay5wcmludF9leGMoKQoKICAgICAgICBhcHAuYWRkX2Vycm9yX2hhbmRsZXIoZXJyb3JfaGFuZGxlcikKCiAgICAgICAgYm90X3N0YXR1cyA9ICJzdGFydGluZ19wb2xsIgogICAgICAgIGxvZ2dlci5pbmZvKCJTdGFydGluZyBwb2xsaW5nLi4uIikKICAgICAgICBhcHAucnVuX3BvbGxpbmcoZHJvcF9wZW5kaW5nX3VwZGF0ZXM9RmFsc2UsIGFsbG93ZWRfdXBkYXRlcz1bIm1lc3NhZ2UiLCAiY2FsbGJhY2tfcXVlcnkiLCAiY2hhdF9qb2luX3JlcXVlc3QiLCAibXlfY2hhdF9tZW1iZXIiXSkKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICBib3Rfc3RhdHVzID0gImNyYXNoZWQiCiAgICAgICAgYm90X2Vycm9yID0gc3RyKGUpCiAgICAgICAgbG9nZ2VyLmVycm9yKGYiQm90IGNyYXNoZWQ6IHtlfSIpCiAgICAgICAgdHJhY2ViYWNrLnByaW50X2V4YygpCiAgICAgICAgd2hpbGUgVHJ1ZToKICAgICAgICAgICAgdGltZS5zbGVlcCg2MCkKCmlmIF9fbmFtZV9fID09ICJfX21haW5fXyI6CiAgICBtYWluKCkK
+import logging
+import asyncio
+import time
+import traceback
+import os
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+start_time = time.time()
+db_connected = False
+bot_status = "starting"
+bot_error = None
+bot_username = None
+CODE_VERSION = "v2.1-dm-notify"
+
+def run_health_server_in_thread(port):
+    import threading
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+    import json as json_mod
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            data = {
+                "status": bot_status,
+                "uptime": int(time.time() - start_time),
+                "db": db_connected,
+                "bot_username": bot_username,
+                "error": bot_error,
+                "version": "v2.1-dm-notify"
+            }
+            self.wfile.write(json_mod.dumps(data).encode())
+        def log_message(self, format, *args):
+            pass
+
+    server = HTTPServer(("0.0.0.0", port), Handler)
+    t = threading.Thread(target=server.serve_forever, daemon=True)
+    t.start()
+    logger.info(f"Health server running on port {port}")
+
+
+async def self_ping_loop(port):
+    """Ping own health endpoint every 4 minutes to prevent Render free tier sleep."""
+    import urllib.request
+    url = f"http://localhost:{port}/"
+    while True:
+        await asyncio.sleep(240)
+        try:
+            urllib.request.urlopen(url, timeout=5)
+            logger.info("Self-ping OK")
+        except Exception as e:
+            logger.warning(f"Self-ping failed: {e}")
+
+
+async def post_init(application):
+    global db_connected, bot_status, bot_username
+    try:
+        me = await application.bot.get_me()
+        bot_username = me.username
+        logger.info(f"Bot authenticated as @{bot_username}")
+    except Exception as e:
+        logger.error(f"Bot auth check failed: {e}")
+
+    try:
+        import database as db
+        await db.init_db()
+        db_connected = True
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Database init failed (bot will run without DB): {e}")
+        traceback.print_exc()
+
+    try:
+        from services.scheduler_service import run_scheduler
+        asyncio.create_task(run_scheduler(application.bot))
+        logger.info("Scheduler started")
+    except Exception as e:
+        logger.error(f"Scheduler start failed: {e}")
+
+    port = int(os.environ.get("PORT", "10000"))
+    asyncio.create_task(self_ping_loop(port))
+    logger.info("Self-ping keep-alive started (every 4 min)")
+
+    bot_status = "polling"
+
+
+async def handle_welcome_message_set(update, context):
+    chat_id = context.user_data.get("set_welcome_chat_id")
+    if not chat_id:
+        return
+    # Allow admins and channel owners to set welcome messages
+    from config import ADMIN_IDS
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        if chat_id != "global":
+            import database as dbc
+            ch = await dbc.get_channel(chat_id)
+            if not ch or ch.get("added_by") != user_id:
+                return
+        else:
+            return
+    welcome_text = update.message.text
+    if welcome_text == "/cancel":
+        del context.user_data["set_welcome_chat_id"]
+        await update.message.reply_text("\u274c Cancelled.")
+        return
+    import database as db
+    try:
+        if chat_id == "global":
+            await db.update_bot_setting("welcome_message", welcome_text)
+        else:
+            await db.update_channel_welcome(chat_id, welcome_text)
+        del context.user_data["set_welcome_chat_id"]
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        back_cb = "cp_settings" if chat_id == "global" else f"cp_ch_{chat_id}"
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Back", callback_data=back_cb)]])
+        await update.message.reply_text(
+            f"\u2705 <b>Welcome message updated!</b>\n\n<b>Preview:</b>\n{welcome_text}",
+            parse_mode="HTML", reply_markup=kb
+        )
+    except Exception as e:
+        logger.error(f"Failed to update welcome: {e}")
+        await update.message.reply_text(f"\u274c Error: {e}")
+
+
+async def panel_command(update, context):
+    """Open the channel control panel."""
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("\U0001f4cb My Channels", callback_data="cp_channels_list")],
+        [InlineKeyboardButton("\U0001f465 Pending Requests", callback_data="cp_pending_all")],
+        [InlineKeyboardButton("\u2699\ufe0f Settings", callback_data="cp_settings")],
+    ])
+    await update.message.reply_text(
+        "\U0001f39b <b>Control Panel</b>\n\n"
+        "Manage your channels, approve join requests, and configure settings.",
+        parse_mode="HTML", reply_markup=kb
+    )
+
+
+async def addmandatory_command(update, context):
+    """Add a mandatory channel. Usage: /addmandatory <channel_id> <@username>"""
+    from config import ADMIN_IDS
+    if update.effective_user.id not in ADMIN_IDS:
+        return
+    args = context.args
+    if not args or len(args) < 1:
+        await update.message.reply_text(
+            "\U0001f512 <b>Add Mandatory Channel</b>\n\n"
+            "Usage: <code>/addmandatory &lt;channel_id&gt; [@username]</code>\n\n"
+            "Example: <code>/addmandatory -1001234567890 @mychannel</code>",
+            parse_mode="HTML"
+        )
+        return
+    import database as db
+    try:
+        chat_id = int(args[0])
+        username = args[1] if len(args) > 1 else None
+        title = None
+        try:
+            chat = await context.bot.get_chat(chat_id)
+            title = chat.title
+            if not username and chat.username:
+                username = f"@{chat.username}"
+        except:
+            pass
+        await db.add_mandatory_channel(chat_id, title, username)
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f512 Mandatory Channels", callback_data="set_mandatory")]])
+        await update.message.reply_text(
+            f"\u2705 Added mandatory channel!\n\n"
+            f"ID: <code>{chat_id}</code>\n"
+            f"Title: {title or 'Unknown'}\n"
+            f"Username: {username or 'N/A'}",
+            parse_mode="HTML", reply_markup=kb
+        )
+    except ValueError:
+        await update.message.reply_text("\u274c Invalid channel ID. Must be a number.")
+    except Exception as e:
+        await update.message.reply_text(f"\u274c Error: {e}")
+
+
+async def admin_command(update, context):
+    from handlers.admin_panel import admin_panel
+    await admin_panel(update, context)
+
+
+def main():
+    global bot_status, bot_error
+    port = int(os.environ.get("PORT", "10000"))
+    run_health_server_in_thread(port)
+
+    try:
+        from telegram.ext import Application, CommandHandler as CmdHandler, ChatJoinRequestHandler, ChatMemberHandler, CallbackQueryHandler, MessageHandler, filters
+        from config import BOT_TOKEN
+        from handlers.start import start_command
+        from handlers.user_commands import referral_command, balance_command, leaderboard_command, mystats_command, help_command
+        from handlers.join_request import handle_join_request
+        from handlers.callbacks import callback_router
+        from handlers.broadcast import get_broadcast_handler
+        from handlers.templates import get_template_handler, del_template
+        from handlers.user_mgmt import get_user_mgmt_handler
+        from handlers.auto_poster import get_autoposter_handler, del_poster
+
+        logger.info(f"All imports successful. Token length: {len(BOT_TOKEN)}")
+        bot_status = "building"
+
+        app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
+
+        # ConversationHandlers first (they need priority)
+        app.add_handler(get_broadcast_handler())
+        app.add_handler(get_template_handler())
+        app.add_handler(get_user_mgmt_handler())
+        app.add_handler(get_autoposter_handler())
+
+        # Command handlers
+        app.add_handler(CmdHandler("start", start_command))
+        app.add_handler(CmdHandler("referral", referral_command))
+        app.add_handler(CmdHandler("balance", balance_command))
+        app.add_handler(CmdHandler("leaderboard", leaderboard_command))
+        app.add_handler(CmdHandler("mystats", mystats_command))
+        app.add_handler(CmdHandler("help", help_command))
+        app.add_handler(CmdHandler("panel", panel_command))
+        app.add_handler(CmdHandler("admin", admin_command))
+        app.add_handler(CmdHandler("addmandatory", addmandatory_command))
+        app.add_handler(CmdHandler("deltemplate", del_template))
+        app.add_handler(CmdHandler("delposter", del_poster))
+
+        # Event handlers
+        from handlers.channel_manage import handle_my_chat_member
+        app.add_handler(ChatMemberHandler(handle_my_chat_member, ChatMemberHandler.MY_CHAT_MEMBER))
+        app.add_handler(ChatJoinRequestHandler(handle_join_request))
+        app.add_handler(CallbackQueryHandler(callback_router))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_welcome_message_set))
+
+        # Error handler
+        async def error_handler(update, context):
+            logger.error(f"Exception while handling an update: {context.error}")
+            traceback.print_exc()
+
+        app.add_error_handler(error_handler)
+
+        bot_status = "starting_poll"
+        logger.info("Starting polling...")
+        app.run_polling(drop_pending_updates=False, allowed_updates=["message", "callback_query", "chat_join_request", "my_chat_member"])
+    except Exception as e:
+        bot_status = "crashed"
+        bot_error = str(e)
+        logger.error(f"Bot crashed: {e}")
+        traceback.print_exc()
+        while True:
+            time.sleep(60)
+
+if __name__ == "__main__":
+    main()
