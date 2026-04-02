@@ -114,7 +114,7 @@ async def panel_command(update, context):
 
 async def addmandatory_command(update, context):
     """Add a mandatory channel. Usage: /addmandatory <channel_id> <@username>"""
-    from config import ADIMIN_IDS
+    from config import ADMIN_IDS
     if update.effective_user.id not in ADMIN_IDS:
         return
     args = context.args
