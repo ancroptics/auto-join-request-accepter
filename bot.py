@@ -133,7 +133,7 @@ async def panel_command(update, context):
         [InlineKeyboardButton("\u2699\ufe0f Settings", callback_data="cp_settings")],
     ]
     if is_admin:
-        buttons.insert(2, [InlineKeyboardButton("\U0001f465 All Pending (Admin)", callback_data="cp_pending_all")])
+        buttons.insert(2, [InlineKeyboardButton("\U0001f465 All Pending (Admin)", callback_data="cp_pending_overview")])
     buttons.append([InlineKeyboardButton("\U0001f3e0 Home", callback_data="go_home")])
     kb = InlineKeyboardMarkup(buttons)
     await update.message.reply_text(
