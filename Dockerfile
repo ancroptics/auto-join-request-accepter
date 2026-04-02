@@ -3,7 +3,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 # Cache bust v2
-ARG CACHEBUST=2
+ARG CACHEBUST=3
 COPY . .
 EXPOSE 10000
 CMD ["python", "bot.py"]
