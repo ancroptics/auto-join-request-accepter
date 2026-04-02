@@ -433,14 +433,33 @@ async def save_template(name, content):
 async def get_all_autoposter_jobs():
     return await get_all_posters()
 
-async def save_autoposter_job(channel_id, template_name, interval_minutes):
-    return await add_auto_poster(channel_id, template_name, interval_minutes)
+async def save_autoposter_job(channel_id, interval_minutes, message=None):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        template_name = message or str(interval_minutes)
+        if message:
+            # Save message as inline template
+            tpl_name = f"auto_{channel_id}_{interval_minutes}"
+            await conn.execute(
+                "INSERT INTO templates (name, content) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET content = $2",
+                tpl_name, message
+            )
+            template_name = tpl_name
+        await conn.execute(
+            "INSERT INTO auto_posters (channel_id, template_name, interval_minutes) VALUES ($1, $2, $3)",
+            channel_id, template_name, interval_minutes
+        )
 
 async def delete_autoposter_job(poster_id):
     return await delete_poster(poster_id)
 
-async def log_broadcast(message_text, sent_count, fail_count):
-    return await add_broadcast(message_text, sent_count, fail_count)
+async def log_broadcast(user_id=None, total=0, sent_count=0, fail_count=0, blocked=0):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "INSERT INTO broadcasts (message_text, sent_count, fail_count) VALUES ($1, $2, $3)",
+            f"by:{user_id} total:{total} blocked:{blocked}", sent_count, fail_count
+        )
 
 async def set_user_banned(user_id, banned=True):
     if banned:
