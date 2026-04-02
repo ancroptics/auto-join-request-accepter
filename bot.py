@@ -2,6 +2,7 @@ import logging
 import asyncio
 import time
 import traceback
+import os
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -41,6 +42,20 @@ def run_health_server_in_thread(port):
     t.start()
     logger.info(f"Health server running on port {port}")
 
+
+async def self_ping_loop(port):
+    """Ping own health endpoint every 4 minutes to prevent Render free tier sleep."""
+    import urllib.request
+    url = f"http://localhost:{port}/"
+    while True:
+        await asyncio.sleep(240)  # 4 minutes
+        try:
+            urllib.request.urlopen(url, timeout=5)
+            logger.info("Self-ping OK")
+        except Exception as e:
+            logger.warning(f"Self-ping failed: {e}")
+
+
 async def post_init(application):
     global db_connected, bot_status, bot_username
     try:
@@ -66,7 +81,13 @@ async def post_init(application):
     except Exception as e:
         logger.error(f"Scheduler start failed: {e}")
 
+    # Start self-ping to keep Render awake
+    port = int(os.environ.get("PORT", "10000"))
+    asyncio.create_task(self_ping_loop(port))
+    logger.info("Self-ping keep-alive started (every 4 min)")
+
     bot_status = "polling"
+
 
 async def handle_welcome_message_set(update, context):
     chat_id = context.user_data.get("set_welcome_chat_id")
@@ -98,6 +119,7 @@ async def handle_welcome_message_set(update, context):
         logger.error(f"Failed to update welcome: {e}")
         await update.message.reply_text(f"\u274c Error: {e}")
 
+
 async def panel_command(update, context):
     """Open the channel control panel."""
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -111,6 +133,7 @@ async def panel_command(update, context):
         "Manage your channels, approve join requests, and configure settings.",
         parse_mode="HTML", reply_markup=kb
     )
+
 
 async def addmandatory_command(update, context):
     """Add a mandatory channel. Usage: /addmandatory <channel_id> <@username>"""
@@ -130,7 +153,6 @@ async def addmandatory_command(update, context):
     try:
         chat_id = int(args[0])
         username = args[1] if len(args) > 1 else None
-        # Try to get channel title
         title = None
         try:
             chat = await context.bot.get_chat(chat_id)
@@ -154,13 +176,14 @@ async def addmandatory_command(update, context):
     except Exception as e:
         await update.message.reply_text(f"\u274c Error: {e}")
 
+
 async def admin_command(update, context):
     from handlers.admin_panel import admin_panel
     await admin_panel(update, context)
 
+
 def main():
     global bot_status, bot_error
-    import os
     port = int(os.environ.get("PORT", "10000"))
     run_health_server_in_thread(port)
 
@@ -181,11 +204,13 @@ def main():
 
         app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
+        # ConversationHandlers first (they need priority)
         app.add_handler(get_broadcast_handler())
         app.add_handler(get_template_handler())
         app.add_handler(get_user_mgmt_handler())
         app.add_handler(get_autoposter_handler())
 
+        # Command handlers
         app.add_handler(CmdHandler("start", start_command))
         app.add_handler(CmdHandler("referral", referral_command))
         app.add_handler(CmdHandler("balance", balance_command))
@@ -198,13 +223,14 @@ def main():
         app.add_handler(CmdHandler("deltemplate", del_template))
         app.add_handler(CmdHandler("delposter", del_poster))
 
+        # Event handlers
         from handlers.channel_manage import handle_my_chat_member
         app.add_handler(ChatMemberHandler(handle_my_chat_member, ChatMemberHandler.MY_CHAT_MEMBER))
         app.add_handler(ChatJoinRequestHandler(handle_join_request))
         app.add_handler(CallbackQueryHandler(callback_router))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_welcome_message_set))
 
-
+        # Error handler - log all exceptions
         async def error_handler(update, context):
             logger.error(f"Exception while handling an update: {context.error}")
             traceback.print_exc()
@@ -212,7 +238,6 @@ def main():
         app.add_error_handler(error_handler)
 
         bot_status = "starting_poll"
-
         logger.info("Starting polling...")
         app.run_polling(drop_pending_updates=False, allowed_updates=["message", "callback_query", "chat_join_request", "my_chat_member"])
     except Exception as e:
