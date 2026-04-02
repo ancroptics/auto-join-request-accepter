@@ -227,6 +227,58 @@ async def export_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(f"Export error: {e}")
 
 
+async def edit_welcome_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    context.user_data["set_welcome_chat_id"] = "global"
+    try:
+        current = await db.get_bot_setting("welcome_message", "Not set")
+    except:
+        current = "Not set"
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Cancel", callback_data="joinreq_panel")]])
+    try:
+        await query.edit_message_text(
+            f"\U0001f4dd <b>Edit Welcome Message</b>\n\n"
+            f"<b>Current:</b>\n{current}\n\n"
+            f"Send me the new welcome message, or /cancel",
+            parse_mode="HTML", reply_markup=kb
+        )
+    except:
+        await query.message.reply_text(
+            f"\U0001f4dd <b>Edit Welcome Message</b>\n\n"
+            f"<b>Current:</b>\n{current}\n\n"
+            f"Send me the new welcome message, or /cancel",
+            parse_mode="HTML", reply_markup=kb
+        )
+
+
+async def lookup_user_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Back", callback_data="usermgmt_panel")]])
+    await query.edit_message_text(
+        "\U0001f50d <b>Lookup User</b>\n\n"
+        "Send a command:\n"
+        "<code>/userinfo &lt;user_id&gt;</code>\n\n"
+        "Example: <code>/userinfo 123456789</code>",
+        parse_mode="HTML", reply_markup=kb
+    )
+
+
+async def ban_user_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Back", callback_data="usermgmt_panel")]])
+    await query.edit_message_text(
+        "\U0001f6ab <b>Ban User</b>\n\n"
+        "Send a command:\n"
+        "<code>/ban &lt;user_id&gt;</code> - Ban a user\n"
+        "<code>/unban &lt;user_id&gt;</code> - Unban a user\n\n"
+        "Example: <code>/ban 123456789</code>",
+        parse_mode="HTML", reply_markup=kb
+    )
+
+
 async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Route all admin panel callbacks."""
     query = update.callback_query
@@ -249,6 +301,9 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         "settings_panel": settings_panel,
         "toggle_auto_approve": toggle_auto_approve,
         "export_users": export_users,
+        "edit_welcome_msg": edit_welcome_msg,
+        "lookup_user": lookup_user_cb,
+        "ban_user": ban_user_cb,
     }
 
     handler = routes.get(data)
