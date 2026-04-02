@@ -222,7 +222,7 @@ async def set_welcome_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE,
     try:
         await query.edit_message_text(
             f"\ud83d\udc4b <b>Welcome Message</b> ({label})\n\n"
-            f"<b>Current:</b>\nrent}\n\n"
+            f"<b>Current:</b>\n{current}\n\n"
             f"Send me the new welcome message, or /cancel",
             parse_mode="HTML", reply_markup=kb
         )
