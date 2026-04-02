@@ -14,6 +14,16 @@ LANGUAGES = {
     "ru": "\ud83c\uddf7\ud83c\uddfa \u0420\u0443\u0441\u0441\u043a\u0438\u0439",
 }
 
+async def _safe_answer(query, text=None, show_alert=False):
+    """Answer callback query, ignoring errors if already answered."""
+    try:
+        if text:
+            await query.answer(text, show_alert=show_alert)
+        else:
+            await query.answer()
+    except Exception:
+        pass
+
 async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
