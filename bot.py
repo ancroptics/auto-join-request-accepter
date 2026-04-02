@@ -97,12 +97,12 @@ async def panel_command(update, context):
     """Open the channel control panel."""
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
     kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton("\u0001f4cb My Channels", callback_data="cp_channels_list")],
-        [InlineKeyboardButton("\u0001f465 Pending Requests", callback_data="cp_pending_all")],
+        [InlineKeyboardButton("\U0001f4cb My Channels", callback_data="cp_channels_list")],
+        [InlineKeyboardButton("\U0001f465 Pending Requests", callback_data="cp_pending_all")],
         [InlineKeyboardButton("\u2699\ufe0f Settings", callback_data="cp_settings")],
     ])
     await update.message.reply_text(
-        "\u0001f39b <b>Control Panel</b>\n\n"
+        "\U0001f39b <b>Control Panel</b>\n\n"
         "Manage your channels, approve join requests, and configure settings.",
         parse_mode="HTML", reply_markup=kb
     )
