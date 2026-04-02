@@ -78,20 +78,25 @@ async def handle_welcome_message_set(update, context):
     welcome_text = update.message.text
     if welcome_text == "/cancel":
         del context.user_data["set_welcome_chat_id"]
-        await update.message.reply_text("Cancelled.")
+        await update.message.reply_text("\u274c Cancelled.")
         return
     import database as db
     try:
-        await db.update_channel_welcome(chat_id, welcome_text)
+        if chat_id == "global":
+            await db.update_bot_setting("welcome_message", welcome_text)
+        else:
+            await db.update_channel_welcome(chat_id, welcome_text)
         del context.user_data["set_welcome_chat_id"]
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Admin Panel", callback_data="admin_panel")]])
+        back_cb = "cp_settings" if chat_id == "global" else f"cp_ch_{chat_id}"
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Back", callback_data=back_cb)]])
         await update.message.reply_text(
-            f"\u2705 Welcome message updated!\n\nPreview:\n{welcome_text}",
+            f"\u2705 <b>Welcome message updated!</b>\n\n<b>Preview:</b>\n{welcome_text}",
             parse_mode="HTML", reply_markup=kb
         )
     except Exception as e:
-        await update.message.reply_text(f"Error: {e}")
+        logger.error(f"Failed to update welcome: {e}")
+        await update.message.reply_text(f"\u274c Error: {e}")
 
 async def panel_command(update, context):
     """Open the channel control panel."""
@@ -106,6 +111,52 @@ async def panel_command(update, context):
         "Manage your channels, approve join requests, and configure settings.",
         parse_mode="HTML", reply_markup=kb
     )
+
+async def addmandatory_command(update, context):
+    """Add a mandatory channel. Usage: /addmandatory <channel_id> <@username>"""
+    from config import ADIMIN_IDS
+    if update.effective_user.id not in ADMIN_IDS:
+        return
+    args = context.args
+    if not args or len(args) < 1:
+        await update.message.reply_text(
+            "\U0001f512 <b>Add Mandatory Channel</b>\n\n"
+            "Usage: <code>/addmandatory &lt;channel_id&gt; [@username]</code>\n\n"
+            "Example: <code>/addmandatory -1001234567890 @mychannel</code>",
+            parse_mode="HTML"
+        )
+        return
+    import database as db
+    try:
+        chat_id = int(args[0])
+        username = args[1] if len(args) > 1 else None
+        # Try to get channel title
+        title = None
+        try:
+            chat = await context.bot.get_chat(chat_id)
+            title = chat.title
+            if not username and chat.username:
+                username = f"@{chat.username}"
+        except:
+            pass
+        await db.add_mandatory_channel(chat_id, title, username)
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f512 Mandatory Channels", callback_data="set_mandatory")]])
+        await update.message.reply_text(
+            f"\u2705 Added mandatory channel!\n\n"
+            f"ID: <code>{chat_id}</code>\n"
+            f"Title: {title or 'Unknown'}\n"
+            f"Username: {username or 'N/A'}",
+            parse_mode="HTML", reply_markup=kb
+        )
+    except ValueError:
+        await update.message.reply_text("\u274c Invalid channel ID. Must be a number.")
+    except Exception as e:
+        await update.message.reply_text(f"\u274c Error: {e}")
+
+async def admin_command(update, context):
+    from handlers.admin_panel import admin_panel
+    await admin_panel(update, context)
 
 def main():
     global bot_status, bot_error
@@ -143,6 +194,7 @@ def main():
         app.add_handler(CmdHandler("help", help_command))
         app.add_handler(CmdHandler("panel", panel_command))
         app.add_handler(CmdHandler("admin", admin_command))
+        app.add_handler(CmdHandler("addmandatory", addmandatory_command))
         app.add_handler(CmdHandler("deltemplate", del_template))
         app.add_handler(CmdHandler("delposter", del_poster))
 
@@ -162,10 +214,6 @@ def main():
         traceback.print_exc()
         while True:
             time.sleep(60)
-
-async def admin_command(update, context):
-    from handlers.admin_panel import admin_panel
-    await admin_panel(update, context)
 
 if __name__ == "__main__":
     main()
