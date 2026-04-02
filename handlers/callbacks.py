@@ -86,7 +86,7 @@ async def show_settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_id = query.from_user.id
     lang = await db.get_user_language(user_id)
-    lang_name = LANGUAGES.get(lang, f"{?} {lang}")
+    lang_name = LANGUAGES.get(lang, "? " + lang)
 
     # Get welcome message preview
     welcome = await db.get_bot_setting("welcome_message", "Not set")
