@@ -28,6 +28,7 @@ async def handle_join_request(update: Update, context: ContextTypes.DEFAULT_TYPE
         welcome_dm = True
 
     # Check channel-specific config
+    ch_config = None
     try:
         ch_config = await db.get_channel_config(chat.id)
         if ch_config and not ch_config.get("auto_approve", True):
