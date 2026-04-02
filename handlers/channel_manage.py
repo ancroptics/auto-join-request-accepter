@@ -7,283 +7,323 @@ import database as db
 
 logger = logging.getLogger(__name__)
 
-
 async def handle_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Detects when bot is added/removed from a channel."""
-    my_chat_member = update.my_chat_member
-    if not my_chat_member:
+    """Detect when bot is added/removed from a channel."""
+    result = update.my_chat_member
+    chat = result.chat
+    new_status = result.new_chat_member.status
+    old_status = result.old_chat_member.status
+
+    logger.info(f"MyChatMember: chat={chat.id} ({chat.title}) old={old_status} new={new_status}")
+
+    if chat.type not in ("channel", "supergroup", "group"):
         return
 
-    chat = my_chat_member.chat
-    user = my_chat_member.from_user
-    old_status = my_chat_member.old_chat_member.status
-    new_status = my_chat_member.new_chat_member.status
-
-    if new_status in ("administrator", "member") and old_status in ("left", "kicked"):
-        logger.info(f"Bot added to {chat.type} '{chat.title}' (ID: {chat.id}) by user {user.id}")
-        if db.pool:
+    if new_status in ("administrator", "member"):
+        await db.add_channel(chat.id, chat.title, getattr(chat, "username", None))
+        logger.info(f"Channel added: {chat.id} - {chat.title}")
+        # Notify admins
+        for aid in ADMIN_IDS:
             try:
-                await db.upsert_channel(chat.id, chat.title or "Unknown", auto_approve=True)
+                kb = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("\ud83d\udccb Manage Channels", callback_data="cp_channels_list")],
+                    [InlineKeyboardButton("\ud83d\udd19 Control Panel", callback_data="cp_main")],
+                ])
+                await context.bot.send_message(
+                    aid,
+                    f"\u2705 <b>Bot added to channel!</b>\n\n"
+                    f"\ud83d\udce2 <b>{chat.title}</b>\n"
+                    f"ID: <code>{chat.id}</code>",
+                    parse_mode="HTML", reply_markup=kb
+                )
             except Exception as e:
-                logger.error(f"Failed to save channel: {e}")
+                logger.error(f"Failed to notify admin {aid}: {e}")
+
+    elif new_status in ("left", "kicked"):
+        await db.remove_channel(chat.id)
+        logger.info(f"Channel removed: {chat.id} - {chat.title}")
+        for aid in ADMIN_IDS:
+            try:
+                await context.bot.send_message(
+                    aid,
+                    f"\u274c <b>Bot removed from channel</b>\n\n"
+                    f"\ud83d\udce2 {chat.title}\n"
+                    f"ID: <code>{chat.id}</code>",
+                    parse_mode="HTML"
+                )
+            except:
+                pass
+
+async def handle_channel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle all cp_* callbacks."""
+    query = update.callback_query
+    data = query.data
+    user_id = query.from_user.id
+
+    if user_id not in ADMIN_IDS:
+        await query.answer("\u274c Admin only", show_alert=True)
+        return
+
+    if data == "cp_main":
+        await show_main_panel(query)
+    elif data == "cp_channels_list":
+        await show_channels_list(query)
+    elif data == "cp_pending_all":
+        await show_pending_all(query)
+    elif data.startswith("cp_ch_"):
+        channel_id = int(data.replace("cp_ch_", ""))
+        await show_channel_detail(query, channel_id, context)
+    elif data.startswith("cp_toggle_auto_"):
+        channel_id = int(data.replace("cp_toggle_auto_", ""))
+        await toggle_auto_approve_cb(query, channel_id, context)
+    elif data.startswith("cp_approve_all_"):
+        channel_id = int(data.replace("cp_approve_all_", ""))
+        await approve_all_cb(query, channel_id, context)
+    elif data.startswith("cp_approve_first_"):
+        parts = data.replace("cp_approve_first_", "").split("_")
+        channel_id = int(parts[0])
+        count = int(parts[1]) if len(parts) > 1 else 10
+        await approve_first_n_cb(query, channel_id, count, context)
+    elif data.startswith("cp_approve_random_"):
+        parts = data.replace("cp_approve_random_", "").split("_")
+        channel_id = int(parts[0])
+        count = int(parts[1]) if len(parts) > 1 else 10
+        await approve_random_n_cb(query, channel_id, count, context)
+    elif data.startswith("cp_remove_"):
+        channel_id = int(data.replace("cp_remove_", ""))
+        await remove_channel_cb(query, channel_id)
+    elif data.startswith("cp_settings"):
+        # Route to settings in callbacks.py
+        from handlers.callbacks import show_settings
+        await show_settings(update, context)
+    else:
+        await query.answer("\u2754 Unknown panel action")
+
+async def show_main_panel(query):
+    await query.answer()
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("\ud83d\udccb My Channels", callback_data="cp_channels_list")],
+        [InlineKeyboardButton("\ud83d\udc65 Pending Requests", callback_data="cp_pending_all")],
+        [InlineKeyboardButton("\u2699\ufe0f Settings", callback_data="cp_settings")],
+    ])
+    try:
+        await query.edit_message_text(
+            "\ud83c\udf9b <b>Control Panel</b>\n\n"
+            "Manage your channels, approve join requests, and configure settings.",
+            parse_mode="HTML", reply_markup=kb
+        )
+    except Exception:
+        await query.message.reply_text(
+            "\ud83c\udf9b <b>Control Panel</b>\n\n"
+            "Manage your channels, approve join requests, and configure settings.",
+            parse_mode="HTML", reply_markup=kb
+        )
+
+async def show_channels_list(query):
+    await query.answer()
+    channels = await db.get_all_channels()
+    if not channels:
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\ud83d\udd19 Back", callback_data="cp_main")]])
         try:
-            kb = InlineKeyboardMarkup([
-                [InlineKeyboardButton("\U0001f4cb My Channels", callback_data="cp_channels_list")],
-                [InlineKeyboardButton("\U0001f465 Pending Requests", callback_data="cp_pending_all")],
-                [InlineKeyboardButton("\u2699\ufe0f Settings", callback_data="cp_settings")],
-            ])
-            await context.bot.send_message(
-                chat_id=user.id,
-                text=(
-                    f"\U0001f389 <b>Bot Added Successfully!</b>\n\n"
-                    f"You added me to <b>{chat.title}</b>!\n\n"
-                    f"\U0001f4e1 <b>Channel:</b> <code>{chat.id}</code>\n"
-                    f"\U0001f464 <b>Added by:</b> {user.first_name}\n\n"
-                    f"Use the control panel below to manage your channels "
-                    f"and approve join requests."
-                ),
-                parse_mode="HTML",
-                reply_markup=kb
+            await query.edit_message_text(
+                "\ud83d\udccb <b>My Channels</b>\n\n"
+                "No channels found. Add the bot as admin to a channel to get started.",
+                parse_mode="HTML", reply_markup=kb
             )
-        except Exception as e:
-            logger.warning(f"Could not DM user {user.id}: {e}")
+        except:
+            await query.message.reply_text(
+                "\ud83d\udccb <b>My Channels</b>\n\n"
+                "No channels found. Add the bot as admin to a channel to get started.",
+                parse_mode="HTML", reply_markup=kb
+            )
+        return
 
-    elif new_status in ("left", "kicked") and old_status in ("administrator", "member"):
-        logger.info(f"Bot removed from '{chat.title}' (ID: {chat.id})")
-        if db.pool:
-            try:
-                await db.delete_channel(chat.id)
-            except Exception as e:
-                logger.error(f"Failed to remove channel: {e}")
+    buttons = []
+    for ch in channels:
+        title = ch.get("title") or "Unknown"
+        pending = await db.get_pending_count_for_channel(ch["channel_id"])
+        auto_icon = "\u2705" if ch.get("auto_approve") else "\u274c"
+        buttons.append([InlineKeyboardButton(
+            f"{auto_icon} {title} ({pending} pending)",
+            callback_data=f"cp_ch_{ch['channel_id']}"
+        )])
+    buttons.append([InlineKeyboardButton("\ud83d\udd19 Back", callback_data="cp_main")])
+
+    kb = InlineKeyboardMarkup(buttons)
+    try:
+        await query.edit_message_text(
+            f"\ud83d\udccb <b>My Channels</b> ({len(channels)})\n\n"
+            f"\u2705 = Auto-approve ON | \u274c = OFF\n"
+            f"Tap a channel to manage it.",
+            parse_mode="HTML", reply_markup=kb
+        )
+    except:
+        await query.message.reply_text(
+            f"\ud83d\udccb <b>My Channels</b> ({len(channels)})\n\n"
+            f"\u2705 = Auto-approve ON | \u274c = OFF\n"
+            f"Tap a channel to manage it.",
+            parse_mode="HTML", reply_markup=kb
+        )
+
+async def show_pending_all(query):
+    await query.answer()
+    channels = await db.get_all_channels()
+    if not channels:
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\ud83d\udd19 Back", callback_data="cp_main")]])
         try:
-            await context.bot.send_message(
-                chat_id=user.id,
-                text=f"\U0001f614 <b>Bot Removed</b>\n\nI was removed from <b>{chat.title}</b>.",
-                parse_mode="HTML"
+            await query.edit_message_text(
+                "\ud83d\udc65 <b>Pending Requests</b>\n\nNo channels found.",
+                parse_mode="HTML", reply_markup=kb
             )
         except:
             pass
-
-
-async def cp_channels_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if not db.pool:
-        await query.edit_message_text("\u26a0\ufe0f Database not connected.")
         return
-    channels = await db.get_all_channels()
-    if not channels:
-        kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f504 Refresh", callback_data="cp_channels_list")]])
-        await query.edit_message_text("\U0001f4cb <b>My Channels</b>\n\nNo channels found. Add me as admin to a channel!", parse_mode="HTML", reply_markup=kb)
-        return
-    text = "\U0001f4cb <b>My Channels</b>\n\n"
+
+    lines = ["\ud83d\udc65 <b>Pending Requests Summary</b>\n"]
+    total = 0
     buttons = []
     for ch in channels:
-        title = ch.get("chat_title", "Unknown")[:25]
-        chat_id = ch["chat_id"]
-        pending = await db.get_pending_count_for_channel(chat_id)
-        auto = "\u2705" if ch.get("auto_approve", True) else "\u274c"
-        text += f"\U0001f4e1 <b>{title}</b>\n   ID: <code>{chat_id}</code> | Auto: {auto} | Pending: {pending}\n\n"
-        buttons.append([InlineKeyboardButton(f"\U0001f4e1 {title} ({pending} pending)", callback_data=f"cp_ch_{chat_id}")])
-    buttons.append([InlineKeyboardButton("\U0001f504 Refresh", callback_data="cp_channels_list")])
-    buttons.append([InlineKeyboardButton("\U0001f519 Control Panel", callback_data="cp_main")])
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons))
+        count = await db.get_pending_count_for_channel(ch["channel_id"])
+        total += count
+        title = ch.get("title") or "Unknown"
+        lines.append(f"\u25ab {title}: <b>{count}</b>")
+        if count > 0:
+            buttons.append([InlineKeyboardButton(f"\u2705 Approve all for {title}", callback_data=f"cp_approve_all_{ch['channel_id']}")])
 
+    lines.append(f"\n\ud83d\udcca <b>Total pending: {total}</b>")
+    buttons.append([InlineKeyboardButton("\ud83d\udd19 Back", callback_data="cp_main")])
 
-async def cp_channel_detail(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int):
-    query = update.callback_query
+    kb = InlineKeyboardMarkup(buttons)
+    try:
+        await query.edit_message_text("\n".join(lines), parse_mode="HTML", reply_markup=kb)
+    except:
+        await query.message.reply_text("\n".join(lines), parse_mode="HTML", reply_markup=kb)
+
+async def show_channel_detail(query, channel_id, context):
     await query.answer()
-    channel = await db.get_channel(chat_id)
-    if not channel:
-        await query.edit_message_text("Channel not found.")
+    ch = await db.get_channel(channel_id)
+    if not ch:
+        await query.edit_message_text("\u274c Channel not found.")
         return
-    title = channel.get("chat_title", "Unknown")
-    auto = "\u2705 ON" if channel.get("auto_approve", True) else "\u274c OFF"
-    pending = await db.get_pending_count_for_channel(chat_id)
-    pending_requests = await db.get_pending_requests_for_channel(chat_id, limit=50)
-    text = f"\U0001f4e1 <b>{title}</b>\n\n\U0001f194 Chat ID: <code>{chat_id}</code>\n\u26a1 Auto-Approve: {auto}\n\u23f3 Pending Requests: <b>{pending}</b>\n"
-    if pending_requests:
-        text += "\n<b>Recent Pending:</b>\n"
-        for i, req in enumerate(pending_requests[:10], 1):
-            name = req.get("first_name", req.get("username", f"User {req['user_id']}"))
-            text += f"  {i}. {name} (<code>{req['user_id']}</code>)\n"
-        if pending > 10:
-            text += f"  ... and {pending - 10} more\n"
-    kb = []
+
+    title = ch.get("title") or "Unknown"
+    pending = await db.get_pending_count_for_channel(channel_id)
+    auto_approve = "\u2705 ON" if ch.get("auto_approve") else "\u274c OFF"
+    welcome = ch.get("welcome_message") or "Not set (using global)"
+    welcome_preview = (welcome[:50] + "...") if len(welcome) > 50 else welcome
+
+    text = (
+        f"\ud83d\udce2 <b>{html_escape(title)}</b>\n\n"
+        f"\ud83c\udd94 ID: <code>{channel_id}</code>\n"
+        f"\ud83d\udc65 Pending: <b>{pending}</b>\n"
+        f"\ud83d\ude80 Auto-approve: {auto_approve}\n"
+        f"\ud83d\udc4b Welcome: {welcome_preview}"
+    )
+
+    buttons = []
+    toggle_text = "\u274c Disable Auto-approve" if ch.get("auto_approve") else "\u2705 Enable Auto-approve"
+    buttons.append([InlineKeyboardButton(toggle_text, callback_data=f"cp_toggle_auto_{channel_id}")])
+
     if pending > 0:
-        kb.append([InlineKeyboardButton(f"\u2705 Accept ALL ({pending})", callback_data=f"cp_approve_all_{chat_id}")])
-        kb.append([InlineKeyboardButton("\u2705 Accept First N", callback_data=f"cp_approve_n_{chat_id}"), InlineKeyboardButton("\U0001f3b2 Accept Random N", callback_data=f"cp_approve_rand_{chat_id}")])
-    kb.append([InlineKeyboardButton(f"\u26a1 Toggle Auto-Approve ({auto})", callback_data=f"cp_toggle_{chat_id}")])
-    kb.append([InlineKeyboardButton("\U0001f4cb Back to Channels", callback_data="cp_channels_list")])
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(kb))
+        buttons.append([InlineKeyboardButton(f"\u2705 Approve All ({pending})", callback_data=f"cp_approve_all_{channel_id}")])
+        if pending > 10:
+            buttons.append([
+                InlineKeyboardButton("\ud83d\udd1d First 10", callback_data=f"cp_approve_first_{channel_id}_10"),
+                InlineKeyboardButton("\ud83c\udfb2 Random 10", callback_data=f"cp_approve_random_{channel_id}_10"),
+            ])
 
+    buttons.append([InlineKeyboardButton("\ud83d\udc4b Set Welcome", callback_data=f"set_welcome_{channel_id}")])
+    buttons.append([InlineKeyboardButton("\ud83d\uddd1 Remove Channel", callback_data=f"cp_remove_{channel_id}")])
+    buttons.append([InlineKeyboardButton("\ud83d\udd19 Back", callback_data="cp_channels_list")])
 
-async def cp_approve_all(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int):
-    query = update.callback_query
-    await query.answer("Approving all requests...")
-    pending = await db.get_pending_requests_for_channel(chat_id, limit=9999)
-    if not pending:
-        await query.answer("No pending requests!", show_alert=True)
+    kb = InlineKeyboardMarkup(buttons)
+    try:
+        await query.edit_message_text(text, parse_mode="HTML", reply_markup=kb)
+    except:
+        await query.message.reply_text(text, parse_mode="HTML", reply_markup=kb)
+
+def html_escape(text):
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+async def toggle_auto_approve_cb(query, channel_id, context):
+    new_val = await db.toggle_auto_approve(channel_id)
+    if new_val is None:
+        await query.answer("\u274c Channel not found")
         return
-    approved = 0
+    status = "ON" if new_val else "OFF"
+    await query.answer(f"Auto-approve: {status}")
+    await show_channel_detail(query, channel_id, context)
+
+async def approve_all_cb(query, channel_id, context):
+    await query.answer("\u23f3 Approving...")
+    requests = await db.get_pending_requests_for_channel(channel_id)
+    success = 0
     failed = 0
-    for req in pending:
+    for req in requests:
         try:
-            await context.bot.approve_chat_join_request(chat_id=chat_id, user_id=req["user_id"])
-            await db.update_join_request_status(req["user_id"], chat_id, "approved")
-            approved += 1
+            await context.bot.approve_chat_join_request(channel_id, req["user_id"])
+            await db.update_join_request_status(req["id"], "approved")
+            success += 1
         except Exception as e:
-            logger.warning(f"Failed to approve {req['user_id']}: {e}")
-            await db.update_join_request_status(req["user_id"], chat_id, "failed")
+            logger.error(f"Failed to approve {req['user_id']}: {e}")
+            await db.update_join_request_status(req["id"], "failed")
             failed += 1
-    kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f4e1 Back to Channel", callback_data=f"cp_ch_{chat_id}")]])
-    await query.edit_message_text(f"\u2705 <b>Approval Complete!</b>\n\n\u2705 Approved: {approved}\n\u274c Failed: {failed}\n\U0001f4ca Total: {approved + failed}", parse_mode="HTML", reply_markup=kb)
 
+    try:
+        await query.edit_message_text(
+            f"\u2705 <b>Approval complete!</b>\n\n"
+            f"\u2705 Approved: <b>{success}</b>\n"
+            f"\u274c Failed: <b>{failed}</b>",
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("\ud83d\udd19 Back", callback_data=f"cp_ch_{channel_id}")]])
+        )
+    except:
+        pass
 
-async def cp_approve_n_ask(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int):
-    query = update.callback_query
-    await query.answer()
-    pending = await db.get_pending_count_for_channel(chat_id)
-    options = [InlineKeyboardButton(f"{n}", callback_data=f"cp_do_approve_n_{chat_id}_{n}") for n in [5, 10, 25, 50, 100] if n <= pending]
-    kb = []
-    if options:
-        kb.append(options[:3])
-        if len(options) > 3:
-            kb.append(options[3:])
-    kb.append([InlineKeyboardButton("\U0001f4e1 Back", callback_data=f"cp_ch_{chat_id}")])
-    await query.edit_message_text(f"\u2705 <b>Accept First N Users</b>\n\nPending: <b>{pending}</b>\nChoose how many to approve (first come, first served):", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(kb))
-
-
-async def cp_approve_rand_ask(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int):
-    query = update.callback_query
-    await query.answer()
-    pending = await db.get_pending_count_for_channel(chat_id)
-    options = [InlineKeyboardButton(f"\U0001f3b2 {n}", callback_data=f"cp_do_approve_rand_{chat_id}_{n}") for n in [5, 10, 25, 50, 100] if n <= pending]
-    kb = []
-    if options:
-        kb.append(options[:3])
-        if len(options) > 3:
-            kb.append(options[3:])
-    kb.append([InlineKeyboardButton("\U0001f4e1 Back", callback_data=f"cp_ch_{chat_id}")])
-    await query.edit_message_text(f"\U0001f3b2 <b>Accept Random N Users</b>\n\nPending: <b>{pending}</b>\nChoose how many random users to approve:", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(kb))
-
-
-async def cp_do_approve_n(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int, count: int):
-    query = update.callback_query
-    await query.answer(f"Approving first {count}...")
-    pending = await db.get_pending_requests_for_channel(chat_id, limit=count)
-    approved = 0
-    failed = 0
-    for req in pending:
+async def approve_first_n_cb(query, channel_id, count, context):
+    await query.answer(f"\u23f3 Approving first {count}...")
+    requests = await db.get_pending_requests_for_channel(channel_id, limit=count)
+    success = 0
+    for req in requests:
         try:
-            await context.bot.approve_chat_join_request(chat_id=chat_id, user_id=req["user_id"])
-            await db.update_join_request_status(req["user_id"], chat_id, "approved")
-            approved += 1
-        except Exception as e:
-            logger.warning(f"Failed to approve {req['user_id']}: {e}")
-            await db.update_join_request_status(req["user_id"], chat_id, "failed")
-            failed += 1
-    kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f4e1 Back to Channel", callback_data=f"cp_ch_{chat_id}")]])
-    await query.edit_message_text(f"\u2705 <b>Approved First {count}!</b>\n\n\u2705 Approved: {approved}\n\u274c Failed: {failed}", parse_mode="HTML", reply_markup=kb)
+            await context.bot.approve_chat_join_request(channel_id, req["user_id"])
+            await db.update_join_request_status(req["id"], "approved")
+            success += 1
+        except:
+            await db.update_join_request_status(req["id"], "failed")
 
+    try:
+        await query.edit_message_text(
+            f"\u2705 <b>Approved {success}/{count} requests</b>",
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("\ud83d\udd19 Back", callback_data=f"cp_ch_{channel_id}")]])
+        )
+    except:
+        pass
 
-async def cp_do_approve_rand(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int, count: int):
-    query = update.callback_query
-    await query.answer(f"Approving {count} random...")
-    all_pending = await db.get_pending_requests_for_channel(chat_id, limit=9999)
-    selected = random.sample(all_pending, min(count, len(all_pending)))
-    approved = 0
-    failed = 0
+async def approve_random_n_cb(query, channel_id, count, context):
+    await query.answer(f"\u23f3 Approving {count} random...")
+    all_reqs = await db.get_pending_requests_for_channel(channel_id)
+    selected = random.sample(all_reqs, min(count, len(all_reqs)))
+    success = 0
     for req in selected:
         try:
-            await context.bot.approve_chat_join_request(chat_id=chat_id, user_id=req["user_id"])
-            await db.update_join_request_status(req["user_id"], chat_id, "approved")
-            approved += 1
-        except Exception as e:
-            logger.warning(f"Failed to approve {req['user_id']}: {e}")
-            await db.update_join_request_status(req["user_id"], chat_id, "failed")
-            failed += 1
-    kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f4e1 Back to Channel", callback_data=f"cp_ch_{chat_id}")]])
-    await query.edit_message_text(f"\U0001f3b2 <b>Approved {count} Random Users!</b>\n\n\u2705 Approved: {approved}\n\u274c Failed: {failed}", parse_mode="HTML", reply_markup=kb)
+            await context.bot.approve_chat_join_request(channel_id, req["user_id"])
+            await db.update_join_request_status(req["id"], "approved")
+            success += 1
+        except:
+            await db.update_join_request_status(req["id"], "failed")
 
+    try:
+        await query.edit_message_text(
+            f"\u2705 <b>Approved {success} random requests</b>",
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("\ud83d\udd19 Back", callback_data=f"cp_ch_{channel_id}")]])
+        )
+    except:
+        pass
 
-async def cp_toggle_auto(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int):
-    query = update.callback_query
-    new_val = await db.toggle_channel_auto_approve(chat_id)
-    status = "ON \u2705" if new_val else "OFF \u274c"
-    await query.answer(f"Auto-approve: {status}")
-    await cp_channel_detail(update, context, chat_id)
-
-
-async def cp_main(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton("\U0001f4cb My Channels", callback_data="cp_channels_list")],
-        [InlineKeyboardButton("\U0001f465 All Pending Requests", callback_data="cp_pending_all")],
-        [InlineKeyboardButton("\u2699\ufe0f Settings", callback_data="cp_settings")],
-    ])
-    await query.edit_message_text("\U0001f39b <b>Control Panel</b>\n\nManage your channels, approve join requests, and configure settings.", parse_mode="HTML", reply_markup=kb)
-
-
-async def cp_pending_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if not db.pool:
-        await query.edit_message_text("\u26a0\ufe0f Database not connected.")
-        return
-    channels = await db.get_all_channels()
-    text = "\U0001f465 <b>Pending Requests Overview</b>\n\n"
-    total_pending = 0
-    buttons = []
-    for ch in channels:
-        chat_id = ch["chat_id"]
-        title = ch.get("chat_title", "Unknown")[:25]
-        pending = await db.get_pending_count_for_channel(chat_id)
-        total_pending += pending
-        text += f"\U0001f4e1 <b>{title}</b>: {pending} pending\n"
-        if pending > 0:
-            buttons.append([InlineKeyboardButton(f"\u2705 Approve {title} ({pending})", callback_data=f"cp_ch_{chat_id}")])
-    text += f"\n\U0001f4ca <b>Total Pending: {total_pending}</b>"
-    buttons.append([InlineKeyboardButton("\U0001f504 Refresh", callback_data="cp_pending_all")])
-    buttons.append([InlineKeyboardButton("\U0001f519 Control Panel", callback_data="cp_main")])
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons))
-
-
-async def cp_settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    settings = await db.get_bot_settings() if db.pool else {}
-    auto = "\u2705 ON" if settings.get("auto_approve", True) else "\u274c OFF"
-    welcome = "\u2705 ON" if settings.get("welcome_dm", True) else "\u274c OFF"
-    kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton(f"\u26a1 Auto-Approve: {auto}", callback_data="cp_toggle_global_auto")],
-        [InlineKeyboardButton(f"\U0001f4ac Welcome DM: {welcome}", callback_data="cp_toggle_welcome_dm")],
-        [InlineKeyboardButton("\U0001f519 Control Panel", callback_data="cp_main")],
-    ])
-    await query.edit_message_text(f"\u2699\ufe0f <b>Settings</b>\n\n\u26a1 Auto-Approve: {auto}\n\U0001f4ac Welcome DM: {welcome}", parse_mode="HTML", reply_markup=kb)
-
-async def cp_toggle_global_auto(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    if not db.pool:
-        await query.answer("DB offline", show_alert=True)
-        return
-    settings = await db.get_bot_settings()
-    new_val = not settings.get("auto_approve", True)
-    await db.update_bot_setting("auto_approve", new_val)
-    status = "ON" if new_val else "OFF"
-    await query.answer(f"Global Auto-Approve: {status}")
-    await cp_settings(update, context)
-
-
-async def cp_toggle_welcome_dm(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    if not db.pool:
-        await query.answer("DB offline", show_alert=True)
-        return
-    settings = await db.get_bot_settings()
-    new_val = not settings.get("welcome_dm", True)
-    await db.update_bot_setting("welcome_dm", new_val)
-    status = "ON" if new_val else "OFF"
-    await query.answer(f"Welcome DM: {status}")
-    await cp_settings(update, context)
+async def remove_channel_cb(query, channel_id):
+    await db.remove_channel(channel_id)
+    await query.answer("\u2705 Channel removed")
+    await show_channels_list(query)
