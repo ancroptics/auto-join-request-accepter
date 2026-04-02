@@ -5,6 +5,7 @@ import os
 logger = logging.getLogger(__name__)
 
 _pool = None
+pool = None  # public alias
 
 async def get_pool():
     global _pool
@@ -14,6 +15,8 @@ async def get_pool():
         if not database_url:
             raise ValueError("DATABASE_URL not set")
         _pool = await asyncpg.create_pool(database_url, min_size=1, max_size=5)
+        global pool
+        pool = _pool
     return _pool
 
 async def init_db():
@@ -389,3 +392,127 @@ async def delete_poster(poster_id):
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute("DELETE FROM auto_posters WHERE id = $1", poster_id)
+
+# ===================================
+# Aliases and missing functions
+# ===================================
+
+async def upsert_user(user_id, username=None, first_name=None, referrer_id=None):
+    return await get_or_create_user(user_id, username, first_name, referrer_id)
+
+async def upsert_channel(channel_id, title=None, username=None):
+    return await add_channel(channel_id, title, username)
+
+async def get_channel_config(channel_id):
+    return await get_channel(channel_id)
+
+async def get_bot_settings():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("SELECT key, value FROM bot_settings")
+        result = {}
+        for r in rows:
+            v = r["value"]
+            if v in ("true", "True"):
+                result[r["key"]] = True
+            elif v in ("false", "False"):
+                result[r["key"]] = False
+            else:
+                result[r["key"]] = v
+        return result
+
+async def get_settings():
+    return await get_bot_settings()
+
+async def update_setting(key, value):
+    return await update_bot_setting(key, str(value))
+
+async def save_template(name, content):
+    return await add_template(name, content)
+
+async def get_all_autoposter_jobs():
+    return await get_all_posters()
+
+async def save_autoposter_job(channel_id, template_name, interval_minutes):
+    return await add_auto_poster(channel_id, template_name, interval_minutes)
+
+async def delete_autoposter_job(poster_id):
+    return await delete_poster(poster_id)
+
+async def log_broadcast(message_text, sent_count, fail_count):
+    return await add_broadcast(message_text, sent_count, fail_count)
+
+async def set_user_banned(user_id, banned=True):
+    if banned:
+        await ban_user(user_id)
+    else:
+        await unban_user(user_id)
+
+async def get_coins(user_id):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT balance FROM users WHERE user_id = $1", user_id)
+        return row["balance"] if row else 0
+
+async def add_coins(user_id, amount):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute("UPDATE users SET balance = balance + $1 WHERE user_id = $2", amount, user_id)
+
+async def get_referral_count(user_id):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT referral_count FROM users WHERE user_id = $1", user_id)
+        return row["referral_count"] if row else 0
+
+async def increment_referral(user_id):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute("UPDATE users SET referral_count = referral_count + 1 WHERE user_id = $1", user_id)
+
+async def get_user_rank(user_id):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT COUNT(*) + 1 as rank FROM users WHERE referral_count > (SELECT COALESCE(referral_count, 0) FROM users WHERE user_id = $1)",
+            user_id
+        )
+        return row["rank"] if row else 0
+
+async def log_join_request(user_id, channel_id, channel_title=None, status="pending", dm_sent=False):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute("INSERT INTO join_requests (user_id, channel_id, status) VALUES ($1, $2, $3)", user_id, channel_id, status)
+
+async def mark_dm_sent(user_id, channel_id):
+    pass
+
+async def get_active_24h():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT COUNT(DISTINCT user_id) as c FROM join_requests WHERE created_at > NOW() - INTERVAL '24 hours'")
+        return row["c"] if row else 0
+
+async def get_active_7d():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT COUNT(DISTINCT user_id) as c FROM join_requests WHERE created_at > NOW() - INTERVAL '7 days'")
+        return row["c"] if row else 0
+
+async def get_active_user_ids():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("SELECT DISTINCT user_id FROM join_requests WHERE created_at > NOW() - INTERVAL '24 hours'")
+        return [r["user_id"] for r in rows]
+
+async def get_new_user_ids():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("SELECT user_id FROM users WHERE created_at > NOW() - INTERVAL '24 hours'")
+        return [r["user_id"] for r in rows]
+
+async def get_all_users_for_export():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("SELECT * FROM users ORDER BY created_at DESC")
+        return [dict(r) for r in rows]
