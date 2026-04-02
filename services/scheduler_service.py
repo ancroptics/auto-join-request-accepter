@@ -8,7 +8,7 @@ async def run_scheduler(bot):
     logger.info("Auto-poster scheduler started")
     while True:
         try:
-            if db.pool:
+            if db._pool is not None:
                 jobs = await db.get_all_autoposter_jobs()
                 for job in jobs:
                     if job.get("is_active"):
