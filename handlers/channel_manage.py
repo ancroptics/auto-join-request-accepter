@@ -20,8 +20,9 @@ async def handle_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TY
         return
 
     if new_status in ("administrator", "member"):
-        await db.add_channel(chat.id, chat.title, getattr(chat, "username", None))
-        logger.info(f"Channel added: {chat.id} - {chat.title}")
+        title = safe_text(chat.title or "Unknown Channel")
+        await db.add_channel(chat.id, title, getattr(chat, "username", None))
+        logger.info(f"Channel added: {chat.id} - {safe_text(chat.title)}")
         # Notify admins
         for aid in ADMIN_IDS:
             try:
@@ -32,7 +33,7 @@ async def handle_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TY
                 await context.bot.send_message(
                     aid,
                     f"\u2705 <b>Bot added to channel!</b>\n\n"
-                    f"\ud83d\udce2 <b>{chat.title}</b>\n"
+                    f"\ud83d\udce2 <b>{safe_text(chat.title)}</b>\n"
                     f"ID: <code>{chat.id}</code>",
                     parse_mode="HTML", reply_markup=kb
                 )
@@ -41,13 +42,13 @@ async def handle_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TY
 
     elif new_status in ("left", "kicked"):
         await db.remove_channel(chat.id)
-        logger.info(f"Channel removed: {chat.id} - {chat.title}")
+        logger.info(f"Channel removed: {chat.id} - {safe_text(chat.title)}")
         for aid in ADMIN_IDS:
             try:
                 await context.bot.send_message(
                     aid,
                     f"\u274c <b>Bot removed from channel</b>\n\n"
-                    f"\ud83d\udce2 {chat.title}\n"
+                    f"\ud83d\udce2 {safe_text(chat.title)}\n"
                     f"ID: <code>{chat.id}</code>",
                     parse_mode="HTML"
                 )
@@ -244,6 +245,12 @@ async def show_channel_detail(query, channel_id, context):
 
 def html_escape(text):
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+def safe_text(text):
+    """Remove surrogate characters that break HTTP encoding."""
+    if not text:
+        return text
+    return text.encode('utf-8', errors='replace').decode('utf-8')
 
 async def toggle_auto_approve_cb(query, channel_id, context):
     new_val = await db.toggle_auto_approve(channel_id)
