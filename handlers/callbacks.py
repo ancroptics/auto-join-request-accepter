@@ -280,6 +280,15 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             from handlers.channel_manage import cp_do_approve_rand
             await cp_do_approve_rand(update, context, chat_id, count)
 
+
+        elif data == "cp_toggle_global_auto":
+            from handlers.channel_manage import cp_toggle_global_auto
+            await cp_toggle_global_auto(update, context)
+
+        elif data == "cp_toggle_welcome_dm":
+            from handlers.channel_manage import cp_toggle_welcome_dm
+            await cp_toggle_welcome_dm(update, context)
+
         elif data.startswith("cp_toggle_"):
             chat_id = int(data.replace("cp_toggle_", ""))
             from handlers.channel_manage import cp_toggle_auto
