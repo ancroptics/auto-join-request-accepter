@@ -14,7 +14,7 @@ async def get_pool():
         database_url = os.environ.get("DATABASE_URL")
         if not database_url:
             raise ValueError("DATABASE_URL not set")
-        _pool = await asyncpg.create_pool(database_url, min_size=1, max_size=5)
+        _pool = await asyncpg.create_pool(database_url, min_size=1, max_size=5, statement_cache_size=0)
         global pool
         pool = _pool
     return _pool
