@@ -20,6 +20,27 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Callback: {data} from {query.from_user.id}")
 
     try:
+        # Start menu callbacks
+        if data == "my_referral":
+            from handlers.user_commands import referral_command
+            await referral_command(update, context)
+            return
+
+        if data == "my_stats":
+            from handlers.user_commands import mystats_command
+            await mystats_command(update, context)
+            return
+
+        if data == "admin_panel":
+            from handlers.admin_panel import admin_panel
+            await admin_panel(update, context)
+            return
+
+        if data == "go_home":
+            from handlers.start import start_command
+            await start_command(update, context)
+            return
+
         # Channel panel routes
         if data.startswith("cp_"):
             from handlers.channel_manage import handle_channel_callback
