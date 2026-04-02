@@ -53,6 +53,16 @@ async def callback_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await handle_admin_callback(update, context)
             return
 
+        # Admin sub-panel callbacks
+        admin_panels = ["stats_panel", "broadcast_panel", "joinreq_panel", "channels_panel",
+                        "templates_panel", "autoposter_panel", "usermgmt_panel", "settings_panel",
+                        "toggle_auto_approve", "export_users", "edit_welcome_msg",
+                        "lookup_user", "ban_user"]
+        if data in admin_panels:
+            from handlers.admin_panel import handle_admin_callback
+            await handle_admin_callback(update, context)
+            return
+
         # Language settings
         if data.startswith("set_lang_"):
             await handle_set_language(update, context)
