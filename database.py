@@ -97,6 +97,49 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT NOW()
             );
         """)
+
+        # ---- migrations: fix columns that CREATE TABLE IF NOT EXISTS won't add ----
+        await conn.execute("""
+            DO $$ BEGIN
+                -- channels: rename old columns if needed
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='channels' AND column_name='chat_id') AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='channels' AND column_name='channel_id') THEN
+                    ALTER TABLE channels RENAME COLUMN chat_id TO channel_id;
+                END IF;
+                -- users: add missing columns
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='referred_by') THEN
+                    ALTER TABLE users ADD COLUMN referred_by BIGINT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='balance') THEN
+                    ALTER TABLE users ADD COLUMN balance INTEGER DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='referral_count') THEN
+                    ALTER TABLE users ADD COLUMN referral_count INTEGER DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_banned') THEN
+                    ALTER TABLE users ADD COLUMN is_banned BOOLEAN DEFAULT FALSE;
+                END IF;
+                -- channels: add missing columns
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='channels' AND column_name='channel_id') THEN
+                    ALTER TABLE channels ADD COLUMN channel_id BIGINT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='channels' AND column_name='auto_approve') THEN
+                    ALTER TABLE channels ADD COLUMN auto_approve BOOLEAN DEFAULT TRUE;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='channels' AND column_name='welcome_message') THEN
+                    ALTER TABLE channels ADD COLUMN welcome_message TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='channels' AND column_name='title') THEN
+                    ALTER TABLE channels ADD COLUMN title TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='channels' AND column_name='username') THEN
+                    ALTER TABLE channels ADD COLUMN username TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='channels' AND column_name='added_at') THEN
+                    ALTER TABLE channels ADD COLUMN added_at TIMESTAMP DEFAULT NOW();
+                END IF;
+            END $$;
+        """)
+
     logger.info("Database tables initialized")
 
 # ===================================
