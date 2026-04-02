@@ -48,7 +48,7 @@ async def self_ping_loop(port):
     import urllib.request
     url = f"http://localhost:{port}/"
     while True:
-        await asyncio.sleep(240)  # 4 minutes
+        await asyncio.sleep(240)
         try:
             urllib.request.urlopen(url, timeout=5)
             logger.info("Self-ping OK")
@@ -81,7 +81,6 @@ async def post_init(application):
     except Exception as e:
         logger.error(f"Scheduler start failed: {e}")
 
-    # Start self-ping to keep Render awake
     port = int(os.environ.get("PORT", "10000"))
     asyncio.create_task(self_ping_loop(port))
     logger.info("Self-ping keep-alive started (every 4 min)")
@@ -93,9 +92,17 @@ async def handle_welcome_message_set(update, context):
     chat_id = context.user_data.get("set_welcome_chat_id")
     if not chat_id:
         return
+    # Allow admins and channel owners to set welcome messages
     from config import ADMIN_IDS
-    if update.effective_user.id not in ADMIN_IDS:
-        return
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        if chat_id != "global":
+            import database as dbc
+            ch = await dbc.get_channel(chat_id)
+            if not ch or ch.get("added_by") != user_id:
+                return
+        else:
+            return
     welcome_text = update.message.text
     if welcome_text == "/cancel":
         del context.user_data["set_welcome_chat_id"]
@@ -230,7 +237,7 @@ def main():
         app.add_handler(CallbackQueryHandler(callback_router))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_welcome_message_set))
 
-        # Error handler - log all exceptions
+        # Error handler
         async def error_handler(update, context):
             logger.error(f"Exception while handling an update: {context.error}")
             traceback.print_exc()
