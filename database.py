@@ -15,7 +15,7 @@ def fix_database_url(url):
     port = parsed.port or 5432
     if host and 'db.' in host and '.supabase.co' in host:
         project_ref = host.replace('db.', '').replace('.supabase.co', '')
-        pooler_host = 'aws-0-ap-northeast-1.pooler.supabase.com'
+        pooler_host = 'aws-1-ap-northeast-1.pooler.supabase.com'
         port = 6543
         user = f'postgres.{project_ref}'
         encoded_pw = quote(password, safe='')
