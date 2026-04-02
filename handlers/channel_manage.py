@@ -262,3 +262,28 @@ async def cp_settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("\U0001f519 Control Panel", callback_data="cp_main")],
     ])
     await query.edit_message_text(f"\u2699\ufe0f <b>Settings</b>\n\n\u26a1 Auto-Approve: {auto}\n\U0001f4ac Welcome DM: {welcome}", parse_mode="HTML", reply_markup=kb)
+
+async def cp_toggle_global_auto(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not db.pool:
+        await query.answer("DB offline", show_alert=True)
+        return
+    settings = await db.get_bot_settings()
+    new_val = not settings.get("auto_approve", True)
+    await db.update_bot_setting("auto_approve", new_val)
+    status = "ON" if new_val else "OFF"
+    await query.answer(f"Global Auto-Approve: {status}")
+    await cp_settings(update, context)
+
+
+async def cp_toggle_welcome_dm(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not db.pool:
+        await query.answer("DB offline", show_alert=True)
+        return
+    settings = await db.get_bot_settings()
+    new_val = not settings.get("welcome_dm", True)
+    await db.update_bot_setting("welcome_dm", new_val)
+    status = "ON" if new_val else "OFF"
+    await query.answer(f"Welcome DM: {status}")
+    await cp_settings(update, context)
