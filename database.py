@@ -345,6 +345,34 @@ async def update_bot_setting(key, value):
     async with p.acquire() as conn:
         await conn.execute(f"INSERT INTO bot_settings (id, {key}) VALUES (1, $1) ON CONFLICT (id) DO UPDATE SET {key}=$1", value)
 
+
+async def get_pending_count_for_channel(chat_id):
+    p = await get_pool()
+    async with p.acquire() as conn:
+        return await conn.fetchval(
+            "SELECT COUNT(*) FROM join_requests WHERE chat_id=$1 AND status='pending'", chat_id
+        ) or 0
+
+async def get_pending_requests_for_channel(chat_id, limit=50):
+    p = await get_pool()
+    async with p.acquire() as conn:
+        rows = await conn.fetch(
+            """SELECT jr.*, u.first_name, u.username FROM join_requests jr
+            LEFT JOIN users u ON jr.user_id=u.user_id
+            WHERE jr.chat_id=$1 AND jr.status='pending'
+            ORDER BY jr.created_at ASC LIMIT $2""",
+            chat_id, limit
+        )
+        return [dict(r) for r in rows]
+
+async def update_join_request_status(user_id, chat_id, status):
+    p = await get_pool()
+    async with p.acquire() as conn:
+        await conn.execute(
+            "UPDATE join_requests SET status=$1 WHERE user_id=$2 AND chat_id=$3",
+            status, user_id, chat_id
+        )
+
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users (
     user_id BIGINT PRIMARY KEY, username TEXT, first_name TEXT, referrer_id BIGINT,
