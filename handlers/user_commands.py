@@ -54,7 +54,7 @@ async def leaderboard_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     for i, u in enumerate(board):
         prefix = medals[i] if i < 3 else f"{i+1}."
         name = u.get("first_name", "Unknown")
-        text += f"{prefix} {name} - {u.get('referral_count', 0)} refs ({u.get('coins', 0)} coins)\n"
+        text += f"{prefix} {name} - {u.get('referral_count', 0)} refs ({u.get('balance', 0)} coins)\n"
     await _reply(update, text, parse_mode="HTML")
 
 async def mystats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
