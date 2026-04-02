@@ -204,9 +204,17 @@ def main():
         app.add_handler(CallbackQueryHandler(callback_router))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_welcome_message_set))
 
+
+        async def error_handler(update, context):
+            logger.error(f"Exception while handling an update: {context.error}")
+            traceback.print_exc()
+
+        app.add_error_handler(error_handler)
+
         bot_status = "starting_poll"
+
         logger.info("Starting polling...")
-        app.run_polling(drop_pending_updates=True, allowed_updates=["message", "callback_query", "chat_join_request", "my_chat_member"])
+        app.run_polling(drop_pending_updates=False, allowed_updates=["message", "callback_query", "chat_join_request", "my_chat_member"])
     except Exception as e:
         bot_status = "crashed"
         bot_error = str(e)
