@@ -89,7 +89,7 @@ async def init_db():
                 channel_id BIGINT NOT NULL,
                 template_name TEXT NOT NULL,
                 interval_minutes INTEGER NOT NULL,
-                last_post TIMESTAMP_WITH TIME ZONE,
+                last_post TIMESTAMP WITH TIME ZONE,
                 active BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT NOW()
             );
