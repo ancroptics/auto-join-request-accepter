@@ -162,7 +162,11 @@ def main():
     global bot_status, bot_error
     import os
     port = int(os.environ.get("PORT", "10000"))
-    run_health_server_in_thread(port)
+    from config import USE_WEBHOOK, WEBHOOK_URL
+    if not (USE_WEBHOOK and WEBHOOK_URL):
+        run_health_server_in_thread(port)
+    else:
+        logger.info(f"Webhook mode - skipping separate health server (webhook serves on port {port})")
 
     try:
         from telegram.ext import Application, CommandHandler as CmdHandler, ChatJoinRequestHandler, ChatMemberHandler, CallbackQueryHandler, MessageHandler, filters
@@ -204,9 +208,23 @@ def main():
         app.add_handler(CallbackQueryHandler(callback_router))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_welcome_message_set))
 
-        bot_status = "starting_poll"
-        logger.info("Starting polling...")
-        app.run_polling(drop_pending_updates=True, allowed_updates=["message", "callback_query", "chat_join_request", "my_chat_member"])
+        from config import USE_WEBHOOK, WEBHOOK_URL, PORT as WH_PORT
+
+        if USE_WEBHOOK and WEBHOOK_URL:
+            bot_status = "starting_webhook"
+            logger.info(f"Starting webhook on port {WH_PORT} -> {WEBHOOK_URL}")
+            app.run_webhook(
+                listen="0.0.0.0",
+                port=WH_PORT,
+                url_path="webhook",
+                webhook_url=f"{WEBHOOK_URL}/webhook",
+                drop_pending_updates=True,
+                allowed_updates=["message", "callback_query", "chat_join_request", "my_chat_member"],
+            )
+        else:
+            bot_status = "starting_poll"
+            logger.info("Starting polling...")
+            app.run_polling(drop_pending_updates=True, allowed_updates=["message", "callback_query", "chat_join_request", "my_chat_member"])
     except Exception as e:
         bot_status = "crashed"
         bot_error = str(e)
