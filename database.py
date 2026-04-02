@@ -29,7 +29,7 @@ async def init_db():
                 balance INTEGER DEFAULT 0,
                 referral_count INTEGER DEFAULT 0,
                 is_banned BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFASLT NOW()
+                created_at TIMESTAMP DEFAULT NOW()
             );
         """)
         await conn.execute("""
@@ -72,7 +72,7 @@ async def init_db():
                 message_text TEXT,
                 sent_count INTEGER DEFAULT 0,
                 fail_count INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFASLT NOW()
+                created_at TIMESTAMP DEFAULT NOW()
             );
         """)
         await conn.execute("""
@@ -80,7 +80,7 @@ async def init_db():
                 id SERIAL PRIMARY KEY,
                 name TEXT UNIQUE NOT NULL,
                 content TEXT NOT NULL,
-                created_at TIMESTAMP DEFASLT NOW()
+                created_at TIMESTAMP DEFAULT NOW()
             );
         """)
         await conn.execute("""
