@@ -106,7 +106,7 @@ async def channels_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if channels:
         text = "\U0001f4fa <b>Channels</b>\n\n"
         for ch in channels:
-            text += f"\u2022 <code>{ch['chat_id']}</code> - {ch.get('title', 'Unknown')}\n"
+            text += f"\u2022 <code>{ch['channel_id']}</code> - {ch.get('title', 'Unknown')}\n"
         text += "\nUse /addchannel &lt;chat_id&gt; to add\nUse /removechannel &lt;chat_id&gt; to remove"
     else:
         text = "\U0001f4fa <b>Channels</b>\n\nNo channels configured.\nUse /addchannel &lt;chat_id&gt; to add one."
@@ -144,8 +144,8 @@ async def autoposter_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         text = "\u23f0 <b>Auto-Poster Jobs</b>\n\n"
         for j in jobs:
-            status = "\u2705" if j.get('enabled') else "\u274c"
-            text += f"{status} <code>{j['chat_id']}</code> every {j.get('interval_min', '?')}min\n"
+            status = "\u2705" if j.get('active') else "\u274c"
+            text += f"{status} <code>{j['channel_id']}</code> every {j.get('interval_minutes', '?')}min\n"
         text += "\nUse /addposter to add\nUse /delposter &lt;chat_id&gt; to remove"
     kb = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001f519 Back", callback_data="admin_panel")]])
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=kb)
@@ -225,3 +225,34 @@ async def export_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_document(buf, caption="\U0001f4e5 User export")
     except Exception as e:
         await query.edit_message_text(f"Export error: {e}")
+
+
+async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Route all admin panel callbacks."""
+    query = update.callback_query
+    data = query.data
+    user_id = query.from_user.id
+
+    if user_id not in ADMIN_IDS:
+        await query.answer("Not authorized", show_alert=True)
+        return
+
+    routes = {
+        "admin_panel": admin_panel,
+        "stats_panel": stats_panel,
+        "broadcast_panel": broadcast_panel,
+        "joinreq_panel": joinreq_panel,
+        "channels_panel": channels_panel,
+        "templates_panel": templates_panel,
+        "autoposter_panel": autoposter_panel,
+        "usermgmt_panel": usermgmt_panel,
+        "settings_panel": settings_panel,
+        "toggle_auto_approve": toggle_auto_approve,
+        "export_users": export_users,
+    }
+
+    handler = routes.get(data)
+    if handler:
+        await handler(update, context)
+    else:
+        await query.answer("Unknown admin action", show_alert=True)
